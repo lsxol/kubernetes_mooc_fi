@@ -1,0 +1,5 @@
+# Lokalne ustawienia narzedzi
+.claude/settings.local.json
+
+# OS
+.DS_Store
