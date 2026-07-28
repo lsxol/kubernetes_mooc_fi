@@ -1,0 +1,7 @@
+{
+    "java.project.sourcePaths": ["reader/src"],
+    "java.project.outputPath": "reader/bin",
+    "java.project.referencedLibraries": [
+        "reader/lib/**/*.jar"
+    ]
+}
