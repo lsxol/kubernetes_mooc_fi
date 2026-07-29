@@ -1,5 +1,6 @@
 # Lokalne ustawienia narzedzi
-.claude/settings.local.json
+.claude/
+*.code-workspace
 
 # OS
 .DS_Store
