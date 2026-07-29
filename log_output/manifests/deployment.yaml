@@ -14,7 +14,8 @@ spec:
     spec:
       volumes:
         - name: shared-volume
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: my-pvc
       containers:
         - name: log-output
           image: lsxol/log-output:latest

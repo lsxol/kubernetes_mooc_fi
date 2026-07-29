@@ -12,6 +12,13 @@ spec:
       labels:
         app: ping-pong
     spec:
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: my-pvc
       containers:
         - name: ping-pong
           image: lsxol/ping-pong:latest
+          volumeMounts:
+            - name: shared-volume
+              mountPath: /usr/src/app/files

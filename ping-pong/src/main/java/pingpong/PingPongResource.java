@@ -1,20 +1,22 @@
 package pingpong;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+import java.nio.file.Files;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
 @Path("/pingpong")
 public class PingPongResource {
 
-    private final AtomicInteger counter = new AtomicInteger(0);
-
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    public String pingPong() {
-        return "pong " + counter.getAndIncrement();
+    public String pingPong() throws Exception {
+        java.nio.file.Path file = java.nio.file.Path.of("/usr/src/app/files/pingpong.txt");
+        Integer number = Files.exists(file) ? Integer.parseInt(Files.readString(file)) : 0;
+        number++;
+        Files.createDirectories(file.getParent());
+        Files.writeString(file, number.toString());
+        return "pong " + number.toString();
     }
 }
