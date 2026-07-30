@@ -15,3 +15,10 @@ spec:
       containers:
         - name: todo-app
           image: lsxol/todo-app:latest
+          volumeMounts:
+            - name: todo-volume
+              mountPath: /usr/src/app/files
+      volumes:
+        - name: todo-volume
+          persistentVolumeClaim:
+            claimName: todo-pvc
