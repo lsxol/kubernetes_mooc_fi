@@ -1,5 +1,6 @@
 # Lokalne ustawienia narzedzi
 .claude/
+.vscode/
 *.code-workspace
 
 # OS
