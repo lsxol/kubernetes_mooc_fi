@@ -15,6 +15,9 @@ spec:
       containers:
         - name: todo-app
           image: lsxol/todo-app:latest
+          env:
+            - name: TODO_BACKEND_URL
+              value: http://todo-backend-app-service:2346
           volumeMounts:
             - name: todo-volume
               mountPath: /usr/src/app/files
