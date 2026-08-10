@@ -15,8 +15,10 @@ public class App {
         Path file = Path.of("/usr/src/app/files/log.txt");
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         HttpClient client = HttpClient.newHttpClient();
+        Path infoFile = Path.of("/usr/src/app/config/information.txt");
         server.createContext("/", exchange -> {
             List<String> logLines = Files.exists(file) ? Files.readAllLines(file) : List.of();
+            String fileContent = Files.exists(infoFile) ? Files.readString(infoFile).trim() : "No information file";
             String pingPongCount;
             try {
                 HttpRequest request = HttpRequest.newBuilder()
@@ -28,7 +30,10 @@ public class App {
             }
             
             String uuidFromLog = logLines.size() > 0 ? logLines.get(logLines.size() - 1) : "No log entries yet";
-            String response = uuidFromLog + "\nPing / Pongs: " + pingPongCount;
+            String response = "file content: " + fileContent
+                + "\nenv variable: MESSAGE=" + System.getenv("MESSAGE")
+                + "\n" + uuidFromLog
+                + "\nPing / Pongs: " + pingPongCount;
             exchange.sendResponseHeaders(200, response.getBytes().length);
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(response.getBytes());

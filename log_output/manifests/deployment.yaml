@@ -17,6 +17,9 @@ spec:
         - name: shared-volume
           persistentVolumeClaim:
             claimName: my-pvc
+        - name: config-volume
+          configMap:
+            name: log-output-configmap  
       containers:
         - name: log-output
           image: lsxol/log-output:latest
@@ -28,3 +31,11 @@ spec:
           volumeMounts:
             - name: shared-volume
               mountPath: /usr/src/app/files
+            - name: config-volume
+              mountPath: /usr/src/app/config
+          env:
+            - name: MESSAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: log-output-configmap
+                  key: MESSAGE
