@@ -20,8 +20,17 @@ import jakarta.ws.rs.core.Response;
 @Path("")
 public class todoapp {
 
-    @ConfigProperty(name = "todo.backend.url", defaultValue = "http://todo-backend-app-service:2346")
+    @ConfigProperty(name = "todo.backend.url")
     String backendUrl;
+
+    @ConfigProperty(name = "picsum.url")
+    String picsumUrl;
+
+    @ConfigProperty(name = "image.path")
+    String imagePath;
+
+    @ConfigProperty(name = "fresh.timer")
+    int freshTimer;
 
     private final HttpClient client = HttpClient.newHttpClient();
 
@@ -71,16 +80,16 @@ public class todoapp {
     @Path("/image")
     @Produces("image/jpg")
     public byte[] getImage() {
-        java.nio.file.Path file = java.nio.file.Path.of("/usr/src/app/files/image.jpg");
+        java.nio.file.Path file = java.nio.file.Path.of(imagePath);
         try {
             boolean fresh = Files.exists(file) && Files.getLastModifiedTime(file, LinkOption.NOFOLLOW_LINKS).toInstant()
-                    .isAfter(Instant.now().minusSeconds(600));
+                    .isAfter(Instant.now().minusSeconds(freshTimer));
             if (!fresh) {
                 HttpClient client = HttpClient.newBuilder()
                         .followRedirects(HttpClient.Redirect.NORMAL)
                         .build();
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(java.net.URI.create("https://picsum.photos/1200"))
+                        .uri(java.net.URI.create(picsumUrl))
                         .build();
                 byte[] imageBytes = client.send(request, HttpResponse.BodyHandlers.ofByteArray()).body();
                 Files.write(file, imageBytes);
