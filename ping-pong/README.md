@@ -1,62 +1,74 @@
-# ping-pong
+# Ping-pong
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+A Quarkus app that counts how many times you've asked it to play. The count is kept in PostgreSQL, so it survives pod restarts.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Endpoints
 
-## Running the application in dev mode
+`GET /pingpong` answers `pong 0`, then `pong 1`, and so on. It returns the current number and then bumps it by one.
 
-You can run your application in dev mode that enables live coding using:
+`GET /pingpong/count` just returns the number without changing anything. The log_output reader calls this one over the cluster network, so both apps have to be in the same namespace.
 
-```shell script
-./gradlew quarkusDev
+One thing worth knowing: `/pingpong` returns the number from *before* the increment. So after 5 requests the last answer was `pong 4`, but `/count` says `5`.
+
+## Where the count lives
+
+It's a single row in a `counter` table. Liquibase creates the table and inserts that row when the app starts, using `src/main/resources/db/changeLog.sql`. There's nothing to set up in the database by hand.
+
+Postgres itself runs as a StatefulSet with a volumeClaimTemplate, next to a headless Service (`clusterIP: None`) so the pod always has the same name to connect to.
+
+## Config
+
+- `PORT` sets the HTTP port, defaults to 8080
+- `POSTGRES_HOST` is set in the Deployment to `postgresql-svc`
+- `POSTGRES_PASSWORD` comes from the Secret `postgresql-secrets`, key `POSTGRES_PASSWORD_PINGPONG`
+
+The datasource is only configured under the `%prod` profile, so tests and dev mode never touch the real database. Quarkus Dev Services starts a throwaway Postgres container instead, which means you need Docker running.
+
+## Manifests
+
+Everything goes into the `exercises` namespace.
+
+- `manifests/secret.yaml` is the Secret with the database password
+- `manifests/postgresql.yaml` has the StatefulSet and its headless Service
+- `manifests/deployment.yaml` is the app
+- `manifests/service.yaml` is a ClusterIP Service on port 2345, forwarding to 8080
+
+The Ingress rule for `/pingpong` isn't here. It lives in [log_output/manifests/ingress.yaml](../log_output/manifests/ingress.yaml), together with the rule for the log output app.
+
+## Running it
+
+Namespace and password first. Without the Secret both pods get stuck in `CreateContainerConfigError`:
+
+```bash
+kubectl create namespace exercises
+kubectl apply -f ping-pong/manifests/secret.yaml
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+I left a dummy password in that Secret on purpose. This is a public course repo and the database only ever runs on my local k3d cluster. Don't copy this anywhere real: `kind: Secret` only base64-encodes the value, it doesn't encrypt anything, and once it's committed it stays in the git history.
 
-## Packaging and running the application
+Worth remembering too: Postgres only picks up the password the first time it sets up its data directory. Changing it in the Secret afterwards does nothing to a database that already exists. You'd have to delete the StatefulSet and its PVC so initdb runs again.
 
-The application can be packaged using:
+Then build and push the image:
 
-```shell script
+```bash
 ./gradlew build
+docker build -f src/main/docker/Dockerfile.jvm -t lsxol/ping-pong:latest .
+docker push lsxol/ping-pong:latest
 ```
 
-It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `build/quarkus-app/lib/` directory.
+Then apply the rest. The database should be up before the app, but the whole folder at once works fine too:
 
-The application is now runnable using `java -jar build/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./gradlew build -Dquarkus.package.jar.type=uber-jar
+```bash
+kubectl apply -f ping-pong/manifests/
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar build/*-runner.jar`.
+It shows up at <http://localhost:8001/pingpong>. My k3d cluster maps the ingress to port 8001.
 
-## Creating a native executable
+## Development
 
-You can create a native executable using:
-
-```shell script
-./gradlew build -Dquarkus.native.enabled=true
+```bash
+./gradlew quarkusDev   # live coding, Dev Services gives you a database
+./gradlew test         # also starts a Postgres container
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./gradlew build -Dquarkus.native.enabled=true -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./build/ping-pong-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/gradle-tooling>.
-
-## Provided Code
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+Both need Docker running.

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: exercises
+  name: postgresql-pingpong
+spec:
+  selector:
+    matchLabels:
+      app: postgresql-pingpong # has to match .spec.template.metadata.labels
+  serviceName: 'postgresql-svc'
+  replicas: 1 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: postgresql-pingpong # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: postgresql-db
+          image: postgres:17.0
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-secrets
+                  key: POSTGRES_PASSWORD_PINGPONG
+          ports:
+            - containerPort: 5432
+              name: postgresql-port
+          volumeMounts:
+            - name: postgresql-pingpong-data
+              mountPath: /var/lib/postgresql
+  volumeClaimTemplates:
+    - metadata:
+        name: postgresql-pingpong-data
+      spec:
+        accessModes: ['ReadWriteOnce']
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 100Mi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: exercises
+  name: postgresql-svc
+  labels:
+    app: postgresql-pingpong
+spec:
+  ports:
+    - port: 5432
+      name: postgresql-port
+  clusterIP: None
+  selector:
+    app: postgresql-pingpong

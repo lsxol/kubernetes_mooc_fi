@@ -8,13 +8,13 @@ import static org.hamcrest.CoreMatchers.is;
 
 @QuarkusTest
 class pingpongTest {
+    
     @Test
-    void testHelloEndpoint() {
+    public void testPingPongEndpoint() {
         given()
-          .when().get("/hello")
+          .when().get("/pingpong")
           .then()
              .statusCode(200)
-             .body(is("Hello from Quarkus REST"));
+             .body(is("pong 0"));
     }
-
 }

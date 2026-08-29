@@ -1,12 +1,12 @@
 # DevOps with Kubernetes 2026
 
-My solutions to the exercises of the University of Helsinki course [DevOps with Kubernetes](https://devopswithkubernetes.com/).
+My exercise solutions for the University of Helsinki course [DevOps with Kubernetes](https://devopswithkubernetes.com/).
 
-Every exercise number links to its **release**, and the directory column links to the code **as it was in that release**.
+Each exercise number below links to its release. The column next to it links to the code as it looked in that release, not as it looks now.
 
 ## Exercises
 
-| Exercise | Description | Directories in this release |
+| Exercise | What it was about | Code in that release |
 |---|---|---|
 | **[1.1](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/1.1)** | log_output - first application | [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/1.1/log_output) |
 | **[1.2](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/1.2)** | The project, step 1 - todo-app created | [`todo-app/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/1.2/todo-app/todo-app) |
@@ -28,22 +28,17 @@ Every exercise number links to its **release**, and the directory column links t
 | **[2.5](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.5)** | Documentation and ConfigMaps | [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.5/log_output) |
 | **[2.6](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.6)** | The project, step 10 | [`todo-app/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.6/todo-app/todo-app) |
 
-## Applications
+## The apps
 
-| Directory | Description |
-|---|---|
-| [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) | Log output application — a `writer` and a `reader` container sharing a volume |
-| [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/ping-pong) | Ping-pong counter application |
-| [`todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/todo-app/todo-app) | The project: todo application frontend |
-| [`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/todo-backend-app) | The project: todo application backend |
+- [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) is the log output app, a writer and a reader container sharing a volume
+- [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/ping-pong) is the ping-pong counter, backed by PostgreSQL
+- [`todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/todo-app/todo-app) is the project frontend
+- [`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/todo-backend-app) is the project backend
 
-Startup instructions for each application are in the README.md of its own directory.
+Each of them has its own README with the startup steps.
 
-[`shared/manifests`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/shared/manifests) is not an application — it holds the PersistentVolume and PersistentVolumeClaim that `log_output` and `ping-pong` both mount, kept in one place because the claim is shared between them.
+[`shared/manifests`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/shared/manifests) isn't an app. It holds the PersistentVolume and PersistentVolumeClaim for the log file that the log_output writer and reader share. Ping-pong used the same claim as well, until its counter moved into PostgreSQL.
 
 ## Namespaces
 
-- `exercises` — log_output, ping-pong and their shared volume
-- `project` — todo-app and todo-backend-app
-
-Neither namespace has a manifest of its own; create them with `kubectl create namespace <name>`.
+`exercises` holds log_output, ping-pong, the ping-pong database and the shared volume. `project` holds todo-app and todo-backend-app. Neither has a manifest, so you create them with `kubectl create namespace <name>`.

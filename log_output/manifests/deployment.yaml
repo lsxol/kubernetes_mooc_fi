@@ -39,3 +39,8 @@ spec:
                 configMapKeyRef:
                   name: log-output-configmap
                   key: MESSAGE
+            - name: URI_PINGPONG
+              valueFrom:
+                configMapKeyRef:
+                  name: log-output-configmap
+                  key: URI_PINGPONG

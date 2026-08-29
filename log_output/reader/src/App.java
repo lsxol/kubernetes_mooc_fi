@@ -22,10 +22,11 @@ public class App {
             String pingPongCount;
             try {
                 HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://ping-pong-service:2345/pingpong/count"))
+                .uri(URI.create(System.getenv("URI_PINGPONG") + "/count"))
                 .build();
             pingPongCount = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
             } catch (Exception e) {
+                System.err.println("Error fetching ping-pong count: " + e.getMessage());
                 pingPongCount = "0";
             }
             
