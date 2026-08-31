@@ -29,6 +29,7 @@ Each exercise number below links to its release. The column next to it links to 
 | **[2.6](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.6)** | The project, step 10 | [`todo-app/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.6/todo-app/todo-app) |
 | **[2.7](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.7)** | Stateful applications | [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.7/ping-pong)<br>[`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.7/log_output) |
 | **[2.8](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.8)** | The project, step 11 | [todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.8/todo-backend-app) |
+| **[2.9](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.9)** | The project, step 12 | [todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.8/todo-backend-app) |
 
 ## The apps
 
