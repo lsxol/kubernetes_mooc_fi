@@ -1,5 +1,6 @@
 # Lokalne ustawienia narzedzi
 .claude/
+CLAUDE.md
 .vscode/
 *.code-workspace
 

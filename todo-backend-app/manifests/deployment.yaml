@@ -16,3 +16,11 @@ spec:
       containers:
         - name: todo-backend-app
           image: lsxol/todo-backend-app:latest
+          env:
+            - name: POSTGRES_HOST
+              value: postgresql-todo-svc
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-todo-secrets
+                  key: POSTGRES_PASSWORD_TODO
