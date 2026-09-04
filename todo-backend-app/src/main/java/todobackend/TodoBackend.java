@@ -8,6 +8,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import java.util.List;
+import io.quarkus.logging.Log;
 
 @Path("/todos")
 public class TodoBackend {
@@ -24,8 +25,13 @@ public class TodoBackend {
     @Consumes(MediaType.TEXT_PLAIN)
     @Transactional
     public void addTodo(String todo) {
+        Log.info("Adding new todo: " + todo);
+        if (todo.trim().length() > 140) {
+            Log.error("To do: " + todo + " is too long");
+            return;
+        }
         Todo newTodo = new Todo();
-        newTodo.value = todo;
+        newTodo.value = todo.trim();
         newTodo.persist();
     }
 }

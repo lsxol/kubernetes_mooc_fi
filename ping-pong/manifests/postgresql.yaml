@@ -6,13 +6,13 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: postgresql-pingpong # has to match .spec.template.metadata.labels
+      app: postgresql-pingpong 
   serviceName: 'postgresql-svc'
-  replicas: 1 # by default is 1
+  replicas: 1 
   template:
     metadata:
       labels:
-        app: postgresql-pingpong # has to match .spec.selector.matchLabels
+        app: postgresql-pingpong 
     spec:
       terminationGracePeriodSeconds: 10
       containers:
@@ -24,6 +24,8 @@ spec:
                 secretKeyRef:
                   name: postgresql-secrets
                   key: POSTGRES_PASSWORD_PINGPONG
+            - name: PGDATA
+              value: /var/lib/postgresql/pgdata
           ports:
             - containerPort: 5432
               name: postgresql-port

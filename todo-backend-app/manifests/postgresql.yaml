@@ -24,6 +24,8 @@ spec:
                 secretKeyRef:
                   name: postgresql-todo-secrets
                   key: POSTGRES_PASSWORD_TODO
+            - name: PGDATA
+              value: /var/lib/postgresql/pgdata
           ports:
             - containerPort: 5433
               name: postgresql-port
