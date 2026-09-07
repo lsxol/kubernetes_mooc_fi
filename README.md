@@ -31,6 +31,7 @@ Each exercise number below links to its release. The column next to it links to 
 | **[2.8](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.8)** | The project, step 11 | [`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.8/todo-backend-app) |
 | **[2.9](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.9)** | The project, step 12 | [`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.9/todo-backend-app) |
 | **[2.10](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.10)** | The project, step 13 | [`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.10/todo-backend-app) |
+| **[3.1](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.1)** | Ping-pong into GKE with a LoadBalancer service | [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.1/ping-pong) |
 
 ## The apps
 
