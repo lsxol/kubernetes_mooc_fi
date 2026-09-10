@@ -32,7 +32,7 @@ Each exercise number below links to its release. The column next to it links to 
 | **[2.9](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.9)** | The project, step 12 | [`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.9/todo-backend-app) |
 | **[2.10](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.10)** | The project, step 13 | [`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.10/todo-backend-app) |
 | **[3.1](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.1)** | Pingpong GKE | [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.1/ping-pong) |
-
+| **[3.2](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.2)** | Back to Ingress | [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.2/log_output)<br>[`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.2/ping-pong) |
 ## The apps
 
 - [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) is the log output app, a writer and a reader container sharing a volume
