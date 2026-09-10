@@ -4,7 +4,7 @@ metadata:
   namespace: exercises
   name: ping-pong-service
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: ping-pong
   ports:

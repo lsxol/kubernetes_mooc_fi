@@ -16,6 +16,10 @@ spec:
       containers:
         - name: ping-pong
           image: lsxol/ping-pong:latest
+          readinessProbe:
+            httpGet:
+              path: /pingpong/count
+              port: 8080
           env:
             - name: POSTGRES_HOST
               value: postgresql-svc

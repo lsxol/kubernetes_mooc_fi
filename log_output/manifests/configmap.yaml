@@ -7,4 +7,4 @@ data:
   information.txt: |
     this text is from file
   MESSAGE: hello world
-  URI_PINGPONG: http://ping-pong-service:2345/pingpong
+  URI_PINGPONG: http://ping-pong-service:80/pingpong
