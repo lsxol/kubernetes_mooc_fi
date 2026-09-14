@@ -4,11 +4,13 @@ A Quarkus app that counts how many times you've asked it to play. The count is k
 
 ## Endpoints
 
-`GET /pingpong` answers `pong 0`, then `pong 1`, and so on. It returns the current number and then bumps it by one.
+`GET /` answers `pong 0`, then `pong 1`, and so on. It returns the current number and then bumps it by one.
 
-`GET /pingpong/count` just returns the number without changing anything. The log_output reader calls this one over the cluster network, so both apps have to be in the same namespace.
+`GET /count` just returns the number without changing anything. The log_output reader calls this one over the cluster network, so both apps have to be in the same namespace.
 
-One thing worth knowing: `/pingpong` returns the number from *before* the increment. So after 5 requests the last answer was `pong 4`, but `/count` says `5`.
+One thing worth knowing: `/` returns the number from *before* the increment. So after 5 requests the last answer was `pong 4`, but `/count` says `5`.
+
+Since exercise 3.4 the app doesn't know it's published under `/pingpong`. It serves the root path, and the HTTPRoute in log_output rewrites `/pingpong` to `/` before the request reaches the pod. Up to 3.3 the prefix was hard-coded in `@Path("/pingpong")`, which meant the app, the test, the health check and log_output's ConfigMap all had to agree on the cluster URL. Now only the route does.
 
 ## Where the count lives
 
@@ -33,7 +35,7 @@ Everything goes into the `exercises` namespace.
 - `manifests/deployment.yaml` is the app
 - `manifests/service.yaml` is a ClusterIP Service on port 80, forwarding to 8080
 
-The routing for `/pingpong` isn't here. It lives in [log_output/manifests/route.yaml](../log_output/manifests/route.yaml), an HTTPRoute attached to the Gateway in the same folder, together with the rule for the log output app. The [HealthCheckPolicy](../log_output/manifests/healthcheckpolicy.yaml) that makes the load balancer check `/pingpong/count` instead of `/` is there too, next to the Gateway it belongs to. Without it the backend is reported unhealthy, because this app doesn't answer on `/`.
+The routing for `/pingpong` isn't here. It lives in [log_output/manifests/route.yaml](../log_output/manifests/route.yaml), an HTTPRoute attached to the Gateway in the same folder, together with the rule for the log output app. The [HealthCheckPolicy](../log_output/manifests/healthcheckpolicy.yaml) that makes the load balancer check `/count` instead of `/` is there too, next to the Gateway it belongs to. The health check talks to the pod directly, so the rewrite doesn't apply to it, and it has to use the app's own paths. It must not use `/`: that endpoint increments the counter, and the load balancer would bump it every 15 seconds on its own.
 
 ## Running it
 
@@ -62,7 +64,7 @@ Then apply the rest. The database should be up before the app, but the whole fol
 kubectl apply -f ping-pong/manifests/
 ```
 
-It shows up at `http://<gateway ip>/pingpong`, where the IP comes from `kubectl get gateway -n exercises` once the Gateway from log_output is applied. See the [log_output README](../log_output/README.md) for enabling the Gateway API on the cluster.
+It shows up at `http://<gateway ip>/pingpong`, where the IP comes from `kubectl get gateway -n exercises` once the Gateway from log_output is applied. The image tag is always `latest`, so after pushing a new build `kubectl apply` sees no change; use `kubectl rollout restart deployment ping-pong -n exercises` to get the new image running. See the [log_output README](../log_output/README.md) for enabling the Gateway API on the cluster.
 
 ## Development
 

@@ -7,7 +7,7 @@ spec:
   default:
     config:
       httpHealthCheck:
-        requestPath: /pingpong/count
+        requestPath: /count
       type: HTTP
   targetRef:
     group: ""

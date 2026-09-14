@@ -34,6 +34,7 @@ Each exercise number below links to its release. The column next to it links to 
 | **[3.1](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.1)** | Pingpong GKE | [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.1/ping-pong) |
 | **[3.2](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.2)** | Back to Ingress | [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.2/log_output)<br>[`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.2/ping-pong) |
 | **[3.3](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.3)** | To the Gateway | [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.3/log_output)<br>[`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.3/ping-pong) |
+| **[3.4](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.4)** | Rewritten routing | [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.4/ping-pong)<br>[`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.4/log_output) |
 ## The apps
 
 - [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) is the log output app, a writer and a reader container sharing a volume

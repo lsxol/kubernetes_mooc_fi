@@ -31,7 +31,7 @@ Everything goes into the `exercises` namespace.
 - `manifests/service.yaml` is a ClusterIP Service on port 2345, forwarding to 8080
 - `manifests/configmap.yaml` holds `information.txt`, `MESSAGE` and `URI_PINGPONG`
 - `manifests/gateway.yaml` is the Gateway, class `gke-l7-global-external-managed`, one HTTP listener on port 80
-- `manifests/route.yaml` is the HTTPRoute attached to it: `/log_output` goes here, `/pingpong` goes to the ping-pong app
+- `manifests/route.yaml` is the HTTPRoute attached to it: `/log_output` goes here, `/pingpong` goes to the ping-pong app, rewritten to `/` on the way
 - `manifests/healthcheckpolicy.yaml` is a GKE HealthCheckPolicy for the ping-pong Service, see below
 
 The shared `log.txt` lives on an `emptyDir` now, so it only has to survive as long as the pod does. The PersistentVolume and PersistentVolumeClaim in [shared/manifests](../shared/manifests) are what it used on the local k3d cluster; they're pinned to a node there and don't apply on GKE.
@@ -40,7 +40,15 @@ The shared `log.txt` lives on an `emptyDir` now, so it only has to survive as lo
 
 Until exercise 3.2 the two paths were routed by an Ingress. In 3.3 it became a Gateway plus an HTTPRoute. The split is: the Gateway owns the load balancer and its listener, the HTTPRoute owns the path rules and can be changed without touching the Gateway. Both Services are plain ClusterIP, GKE sends traffic straight to the pods through network endpoint groups, so there's no need for NodePort anymore.
 
-The load balancer runs its own health checks, and by default it asks for `/`. The reader answers on `/`, ping-pong doesn't, so `healthcheckpolicy.yaml` points ping-pong's health check at `/pingpong/count` instead. With the Ingress this was inferred from the readinessProbe; with the Gateway it has to be said explicitly, in a policy object that references the Service by name in `targetRef`.
+The load balancer runs its own health checks, and by default it asks for `/`. The reader answers on `/` with a page, but ping-pong's `/` increments the counter, so `healthcheckpolicy.yaml` points ping-pong's health check at `/count` instead. With the Ingress the path was inferred from the readinessProbe; with the Gateway it has to be said explicitly, in a policy object that references the Service by name in `targetRef`.
+
+### Rewriting the path
+
+Since 3.4 the ping-pong rule carries a `URLRewrite` filter with `ReplacePrefixMatch: /`. A request for `/pingpong` reaches the pod as `/`, and `/pingpong/count` as `/count`. The browser still sees `/pingpong`; the rewrite changes the request on its way to the backend, it isn't a redirect. The ping-pong app can therefore serve the root path and stay unaware of where the cluster publishes it. The reader doesn't need a rewrite: its handler is registered on `/` and Java's `HttpServer` matches every path under it, so `/log_output` works as is.
+
+Two things in this folder talk to ping-pong directly, bypassing the Gateway and its rewrite, and use the app's own paths: the health check (`/count`) and the reader, whose `URI_PINGPONG` in the ConfigMap is now just `http://ping-pong-service:80` with `/count` appended in code.
+
+Changes to the HTTPRoute show up on the cluster immediately but the Google load balancer takes a few minutes to pick them up. During that window the old rules are still served, which is easy to mistake for a broken manifest.
 
 ## Running it
 

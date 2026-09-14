@@ -7,7 +7,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import pingpong.counter.Counter;
 
-@Path("/pingpong")
+@Path("/")
 public class PingPongResource {
 
     @GET

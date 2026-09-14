@@ -12,7 +12,7 @@ class pingpongTest {
     @Test
     public void testPingPongEndpoint() {
         given()
-          .when().get("/pingpong")
+          .when().get("/")
           .then()
              .statusCode(200)
              .body(is("pong 0"));
