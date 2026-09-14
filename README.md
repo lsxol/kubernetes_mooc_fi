@@ -33,6 +33,7 @@ Each exercise number below links to its release. The column next to it links to 
 | **[2.10](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/2.10)** | The project, step 13 | [`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/2.10/todo-backend-app) |
 | **[3.1](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.1)** | Pingpong GKE | [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.1/ping-pong) |
 | **[3.2](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.2)** | Back to Ingress | [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.2/log_output)<br>[`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.2/ping-pong) |
+| **[3.3](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.3)** | To the Gateway | [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.3/log_output)<br>[`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.3/ping-pong) |
 ## The apps
 
 - [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) is the log output app, a writer and a reader container sharing a volume
@@ -42,7 +43,7 @@ Each exercise number below links to its release. The column next to it links to 
 
 Each of them has its own README with the startup steps.
 
-[`shared/manifests`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/shared/manifests) isn't an app. It holds the PersistentVolume and PersistentVolumeClaim for the log file that the log_output writer and reader share. Ping-pong used the same claim as well, until its counter moved into PostgreSQL.
+[`shared/manifests`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/shared/manifests) isn't an app. It holds the PersistentVolume and PersistentVolumeClaim that log_output used for its shared log file on the local k3d cluster. Ping-pong used the same claim as well, until its counter moved into PostgreSQL. Since 3.2 the apps run on GKE and log_output keeps the file on an `emptyDir` instead.
 
 ## Namespaces
 

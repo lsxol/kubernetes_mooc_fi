@@ -29,10 +29,18 @@ Everything goes into the `exercises` namespace.
 
 - `manifests/deployment.yaml` has both containers, the shared volume and the ConfigMap mounts
 - `manifests/service.yaml` is a ClusterIP Service on port 2345, forwarding to 8080
-- `manifests/ingress.yaml` routes `/log_output` here and `/pingpong` to the ping-pong app
 - `manifests/configmap.yaml` holds `information.txt`, `MESSAGE` and `URI_PINGPONG`
+- `manifests/gateway.yaml` is the Gateway, class `gke-l7-global-external-managed`, one HTTP listener on port 80
+- `manifests/route.yaml` is the HTTPRoute attached to it: `/log_output` goes here, `/pingpong` goes to the ping-pong app
+- `manifests/healthcheckpolicy.yaml` is a GKE HealthCheckPolicy for the ping-pong Service, see below
 
-The PersistentVolume and PersistentVolumeClaim for the shared `log.txt` aren't here, they're in [shared/manifests](../shared/manifests). Ping-pong used to keep its counter file on the same claim, before that counter moved into PostgreSQL.
+The shared `log.txt` lives on an `emptyDir` now, so it only has to survive as long as the pod does. The PersistentVolume and PersistentVolumeClaim in [shared/manifests](../shared/manifests) are what it used on the local k3d cluster; they're pinned to a node there and don't apply on GKE.
+
+### Ingress to Gateway
+
+Until exercise 3.2 the two paths were routed by an Ingress. In 3.3 it became a Gateway plus an HTTPRoute. The split is: the Gateway owns the load balancer and its listener, the HTTPRoute owns the path rules and can be changed without touching the Gateway. Both Services are plain ClusterIP, GKE sends traffic straight to the pods through network endpoint groups, so there's no need for NodePort anymore.
+
+The load balancer runs its own health checks, and by default it asks for `/`. The reader answers on `/`, ping-pong doesn't, so `healthcheckpolicy.yaml` points ping-pong's health check at `/pingpong/count` instead. With the Ingress this was inferred from the readinessProbe; with the Gateway it has to be said explicitly, in a policy object that references the Service by name in `targetRef`.
 
 ## Running it
 
@@ -46,25 +54,32 @@ docker build -t lsxol/log-reader:latest log_output/reader
 docker push lsxol/log-reader:latest
 ```
 
-Create the namespace and the storage. The namespace has no manifest of its own:
+The cluster needs the Gateway API enabled, GKE doesn't turn it on by default:
+
+```bash
+gcloud container clusters update dwk-cluster --zone europe-central2-b --gateway-api=standard
+```
+
+Create the namespace, it has no manifest of its own, then the app:
 
 ```bash
 kubectl create namespace exercises
-kubectl apply -f shared/manifests/persistentvolume.yaml
-kubectl apply -f shared/manifests/persistentvolumeclaim.yaml
-```
-
-Then the app:
-
-```bash
 kubectl apply -f log_output/manifests/
 ```
 
-It shows up at <http://localhost:8001/log_output>. My k3d cluster maps the ingress to port 8001.
+The Gateway gets a public IP after a few minutes:
+
+```bash
+kubectl get gateway -n exercises
+```
+
+The app is then at `http://<that ip>/log_output`. Until the load balancer is fully programmed and the backends are healthy, the address answers `fault filter abort`; that's the load balancer talking, not the app.
 
 ## Things that caught me out
 
-The PersistentVolume is a local volume pinned to `/mnt/data` on node `k3d-k3s-default-agent-0` through node affinity, so it only works on that k3d cluster.
+The Gateway and HTTPRoute have their own API group, `gateway.networking.k8s.io`. Writing `networking.k8s.io` out of Ingress habit fails with `no matches for kind "Gateway"`, which looks like the Gateway API is missing from the cluster when it isn't. The GKE class is `gke-l7-...` with a letter L, not the digit one.
+
+In an HTTPRoute the path match is `type: PathPrefix`, not `pathType` like in Ingress, and it sits inside `path:`, indented one level deeper. Get the indentation wrong and the API rejects it with `unknown field "spec.rules[0].matches[0].type"`.
 
 The `Ping / Pongs` line stays at `0` until ping-pong is actually running in the same namespace.
 
