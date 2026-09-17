@@ -1,0 +1,91 @@
+name: Release application
+
+on:
+  push:
+    branches: ['**']
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: dwk-cluster
+  GKE_ZONE: europe-central2-b
+  REGISTRY: europe-central2-docker.pkg.dev
+  REPOSITORY: my-repository
+  IMAGE_FRONTEND: todo-app
+  IMAGE_BACKEND: todo-backend-app
+  BRANCH: ${{ github.ref_name }}
+
+jobs:
+  build-publish-deploy:
+    name: Build, Publish and Deploy
+    runs-on: ubuntu-latest
+    environment: GKE_PROJECT
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: "${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}"
+          service_account: "${{ secrets.SERVICE_ACCOUNT }}"
+
+      - name: 'Set up Cloud SDK'
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: 'Use gcloud CLI'
+        run: gcloud info
+
+      - name: 'Get GKE credentials'
+        uses: 'google-github-actions/get-gke-credentials@v3'
+        with:
+          cluster_name: '${{ env.GKE_CLUSTER }}'
+          project_id: '${{ env.PROJECT_ID }}'
+          location: '${{ env.GKE_ZONE }}'
+      
+      - name : 'Form the image name'
+        run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE_FRONTEND:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
+      - name : 'Form the backend image name'
+        run: echo "BACKEND_IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE_BACKEND:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
+
+      - name: Install java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Build frontend
+        working-directory: todo-app/todo-app
+        run: ./gradlew build -x test
+
+      - name: Build backend
+        working-directory: todo-backend-app
+        run: ./gradlew build -x test
+
+      - name: Build frontend image
+        run: docker build -f todo-app/todo-app/src/main/docker/Dockerfile.jvm --tag $IMAGE_TAG todo-app/todo-app
+      - name: Build backend image
+        run: docker build -f todo-backend-app/src/main/docker/Dockerfile.jvm --tag $BACKEND_IMAGE_TAG todo-backend-app
+
+      - name: Configure Docker
+        run: gcloud --quiet auth configure-docker $REGISTRY
+
+      - name: Publish
+        run: docker push $IMAGE_TAG
+
+      - name: Publish backend image
+        run: docker push $BACKEND_IMAGE_TAG
+
+      - name: Set up Kustomize
+        uses: imranismail/setup-kustomize@v3
+
+      - name: Deploy to GKE
+        run: |-
+          kustomize edit set image lsxol/todo-app=$IMAGE_TAG
+          kustomize edit set image lsxol/todo-backend-app=$BACKEND_IMAGE_TAG
+          kustomize build . | kubectl apply -f -
+          kubectl rollout status deployment/todo-app -n project
+          kubectl rollout status deployment/todo-backend-app -n project
