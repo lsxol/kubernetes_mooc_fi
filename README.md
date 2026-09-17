@@ -35,6 +35,7 @@ Each exercise number below links to its release. The column next to it links to 
 | **[3.2](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.2)** | Back to Ingress | [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.2/log_output)<br>[`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.2/ping-pong) |
 | **[3.3](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.3)** | To the Gateway | [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.3/log_output)<br>[`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.3/ping-pong) |
 | **[3.4](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.4)** | Rewritten routing | [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.4/ping-pong)<br>[`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.4/log_output) |
+| **[3.5](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.5)** | The project, step 14 | [`todo-app/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.5/todo-app/todo-app)<br>[`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.5/todo-backend-app)<br>[`kustomization.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/3.5/kustomization.yaml) |
 ## The apps
 
 - [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) is the log output app, a writer and a reader container sharing a volume
@@ -48,4 +49,6 @@ Each of them has its own README with the startup steps.
 
 ## Namespaces
 
-`exercises` holds log_output, ping-pong, the ping-pong database and the shared volume. `project` holds todo-app and todo-backend-app. Neither has a manifest, so you create them with `kubectl create namespace <name>`.
+`exercises` holds log_output, ping-pong, the ping-pong database and the shared volume. It has no manifest, so you create it with `kubectl create namespace exercises`.
+
+`project` holds todo-app and todo-backend-app. Since 3.5 it has a manifest and is created together with the rest by `kubectl apply -k .` from the repository root.

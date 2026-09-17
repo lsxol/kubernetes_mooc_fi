@@ -1,62 +1,69 @@
 # todo-backend-app
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+The project backend. A Quarkus app that keeps the todos in PostgreSQL.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Endpoints
 
-## Running the application in dev mode
+`GET /todos` returns all todos as a JSON array of strings.
 
-You can run your application in dev mode that enables live coding using:
+`POST /todos` takes the todo as `text/plain` in the body and stores it. Every request is logged. A todo longer than 140 characters is logged as an error and not stored.
 
-```shell script
-./gradlew quarkusDev
+## Where the todos live
+
+A `todo` table in PostgreSQL. Liquibase creates the table and its sequence when the app starts, from `src/main/resources/db/changeLog.sql`.
+
+Postgres runs as a StatefulSet with a volumeClaimTemplate, next to a headless Service so the pod has a stable name. The claim has no `storageClassName`, so it gets whatever the cluster's default is: `standard-rwo` on GKE, `local-path` on k3d. Naming `local-path` explicitly, as it was before 3.5, leaves the claim `Pending` on GKE.
+
+## Config
+
+- `PORT` sets the HTTP port, defaults to 8080
+- `POSTGRES_HOST` is set in the Deployment to `postgresql-todo-svc`
+- `POSTGRES_PASSWORD` comes from the Secret `postgresql-todo-secrets`, key `POSTGRES_PASSWORD_TODO`
+
+The Secret in the repo holds a dummy password on purpose. This is a public course repo and the database only runs on a throwaway course cluster. `kind: Secret` only base64-encodes the value, don't copy this anywhere real.
+
+## Manifests
+
+Everything goes into the `project` namespace, which is created by [todo-app's manifests](../todo-app/todo-app/manifests/namespace.yaml).
+
+- `manifests/secret.yaml` is the Secret with the database password
+- `manifests/postgresql.yaml` has the StatefulSet and its headless Service
+- `manifests/deployment.yaml` is the app
+- `manifests/service.yaml` is a ClusterIP Service on port 2346, forwarding to 8080
+- `manifests/cronjob.yaml` is a CronJob that every hour posts a todo "Read <random Wikipedia article>"
+- `manifests/kustomization.yaml` lists the files above
+
+There is no Gateway rule for the backend. It is only reachable inside the cluster, by the frontend and by the CronJob, both through `todo-backend-app-service:2346`.
+
+`monitoring/` holds the Helm values for the Prometheus, Loki, Grafana and k8s-monitoring charts used in part 2. They aren't part of the Kustomize deployment.
+
+## Running it
+
+Frontend and backend are deployed together from the repository root:
+
+```bash
+kubectl apply -k .
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+See the [todo-app README](../todo-app/todo-app/README.md) for the Gateway API prerequisite and how to find the address.
 
-## Packaging and running the application
+The backend pod usually restarts once on a fresh deploy. It starts faster than Postgres, fails to connect, and comes up fine on the second try.
 
-The application can be packaged using:
+To build and push the image:
 
-```shell script
+```bash
 ./gradlew build
+docker build -f src/main/docker/Dockerfile.jvm -t lsxol/todo-backend-app:latest .
+docker push lsxol/todo-backend-app:latest
 ```
 
-It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `build/quarkus-app/lib/` directory.
+Then `kubectl rollout restart deployment todo-backend-app -n project`, because the tag doesn't change.
 
-The application is now runnable using `java -jar build/quarkus-app/quarkus-run.jar`.
+## Development
 
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./gradlew build -Dquarkus.package.jar.type=uber-jar
+```bash
+./gradlew quarkusDev   # live coding, Dev Services gives you a database
+./gradlew test         # also starts a Postgres container
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar build/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
-./gradlew build -Dquarkus.native.enabled=true
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./gradlew build -Dquarkus.native.enabled=true -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./build/todo-backend-app-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/gradle-tooling>.
-
-## Provided Code
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+Both need Docker running.

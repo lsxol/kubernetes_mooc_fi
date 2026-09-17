@@ -27,7 +27,7 @@ spec:
             - name: PGDATA
               value: /var/lib/postgresql/pgdata
           ports:
-            - containerPort: 5433
+            - containerPort: 5432
               name: postgresql-port
           volumeMounts:
             - name: postgresql-todo-data
@@ -37,7 +37,6 @@ spec:
         name: postgresql-todo-data
       spec:
         accessModes: ['ReadWriteOnce']
-        storageClassName: local-path
         resources:
           requests:
             storage: 100Mi
@@ -53,7 +52,7 @@ metadata:
     app: postgresql-todo
 spec:
   ports:
-    - port: 5433
+    - port: 5432
       name: postgresql-port
   clusterIP: None
   selector:
