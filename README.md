@@ -37,6 +37,7 @@ Each exercise number below links to its release. The column next to it links to 
 | **[3.4](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.4)** | Rewritten routing | [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.4/ping-pong)<br>[`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.4/log_output) |
 | **[3.5](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.5)** | The project, step 14 | [`todo-app/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.5/todo-app/todo-app)<br>[`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.5/todo-backend-app)<br>[`kustomization.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/3.5/kustomization.yaml) |
 | **[3.6](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.6)** | The project, step 15 | [`.github/workflows/main.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/3.6/.github/workflows/main.yaml) |
+| **[3.7](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.7)** | The project, step 16 | [`.github/workflows/main.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/3.7/.github/workflows/main.yaml) |
 ## The apps
 
 - [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) is the log output app, a writer and a reader container sharing a volume
@@ -51,6 +52,8 @@ Each of them has its own README with the startup steps.
 ## Deployment pipeline
 
 Every push to a branch runs [`.github/workflows/main.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/master/.github/workflows/main.yaml). It builds both project apps with Gradle, builds their images, pushes them to Artifact Registry and deploys the project to GKE with Kustomize, replacing the Docker Hub images in the manifests with the freshly built ones.
+
+Every branch gets its own environment: the workflow sets the Kustomize namespace to the branch name, so a push to `test-env` deploys a full copy of the project, Gateway included, into the namespace `test-env`. Pushes to `master` still go to `project`.
 
 The workflow logs in to Google Cloud with Workload Identity Federation, so there is no service account key anywhere. It reads three secrets from the GitHub environment `GKE_PROJECT`: `GKE_PROJECT` (project ID), `SERVICE_ACCOUNT` (e-mail of the deploying service account) and `WORKLOAD_IDENTITY_PROVIDER` (full resource name of the provider).
 
