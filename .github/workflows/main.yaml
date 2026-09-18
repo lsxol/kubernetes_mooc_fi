@@ -17,6 +17,7 @@ env:
   IMAGE_FRONTEND: todo-app
   IMAGE_BACKEND: todo-backend-app
   BRANCH: ${{ github.ref_name }}
+  NAMESPACE: ${{ github.ref_name == 'master' && 'project' || github.ref_name }}
 
 jobs:
   build-publish-deploy:
@@ -84,8 +85,9 @@ jobs:
 
       - name: Deploy to GKE
         run: |-
+          kustomize edit set namespace ${NAMESPACE}
           kustomize edit set image lsxol/todo-app=$IMAGE_TAG
           kustomize edit set image lsxol/todo-backend-app=$BACKEND_IMAGE_TAG
           kustomize build . | kubectl apply -f -
-          kubectl rollout status deployment/todo-app -n project
-          kubectl rollout status deployment/todo-backend-app -n project
+          kubectl rollout status deployment/todo-app -n ${NAMESPACE}
+          kubectl rollout status deployment/todo-backend-app -n ${NAMESPACE}
