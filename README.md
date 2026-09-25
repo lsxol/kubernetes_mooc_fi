@@ -65,3 +65,22 @@ The workflow logs in to Google Cloud with Workload Identity Federation, so there
 `exercises` holds log_output, ping-pong, the ping-pong database and the shared volume. It has no manifest, so you create it with `kubectl create namespace exercises`.
 
 `project` holds todo-app and todo-backend-app. Since 3.5 it has a manifest and is created together with the rest by `kubectl apply -k .` from the repository root.
+
+
+## 3.9. DBaaS vs DIY
+
+## Database Solutions Comparison: Managed DB vs Self-Hosted in Kubernetes
+
+### 1. Managed Database (e.g., Google Cloud SQL, AWS RDS)
+* **Pros:** Highly reliable, saves time, very safe.
+* **Cons:** Costs extra money, ties you to one cloud provider.
+* **Setup (Work & Cost):** Very fast and easy to initialize through the cloud console. However, it requires an ongoing monthly fee.
+* **Maintenance:** Zero maintenance. The cloud provider handles all updates, security, and scaling.
+* **Backups:** Fully automated. It is very easy to restore data with just a few clicks in the browser.
+
+### 2. Self-Hosted in Kubernetes (StatefulSet + Persistent Volume)
+* **Pros:** Free (no extra database fees), full control over the configuration.
+* **Cons:** Complex to set up, higher risk of data loss if you make a mistake.
+* **Setup (Work & Cost):** Requires a lot of work to write and test YAML files (StatefulSets, PVCs, Services). Costs nothing extra beyond your existing cluster compute resources.
+* **Maintenance:** High effort. You have to manually handle version updates, crashes, and monitoring.
+* **Backups:** Manual setup is required (for example, writing custom CronJobs to dump data). Restoring data is harder, requires command-line tools, and takes more time.
