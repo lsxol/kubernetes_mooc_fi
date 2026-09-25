@@ -31,11 +31,25 @@ Everything goes into the `project` namespace, which is created by [todo-app's ma
 - `manifests/deployment.yaml` is the app
 - `manifests/service.yaml` is a ClusterIP Service on port 2346, forwarding to 8080
 - `manifests/cronjob.yaml` is a CronJob that every hour posts a todo "Read <random Wikipedia article>"
+- `manifests/backupcronjob.yaml` is the nightly database backup, see below
 - `manifests/kustomization.yaml` lists the files above
 
 There is no Gateway rule for the backend. It is only reachable inside the cluster, by the frontend and by the CronJob, both through `todo-backend-app-service:2346`.
 
 `monitoring/` holds the Helm values for the Prometheus, Loki, Grafana and k8s-monitoring charts used in part 2. They aren't part of the Kustomize deployment.
+
+## Backups
+
+`backupcronjob.yaml` runs `pg_dump` every night at midnight and copies the dump to the bucket `gs://lsxol-todo-backups` as `todo-backup-<date>.sql`. The job runs in a `google/cloud-sdk` image with `postgresql17-client` installed on the fly; the client has to be at least as new as the server, which is Postgres 17.
+
+The pod authenticates to Google Cloud with Workload Identity, so there is no key anywhere. The Kubernetes ServiceAccount `todo-backup-sa` is annotated with the Google service account `todo-backup-gsa`, which has `roles/storage.objectAdmin` on the project and allows `project/todo-backup-sa` to impersonate it (`roles/iam.workloadIdentityUser`). The cluster needs Workload Identity enabled (`--workload-pool=<project>.svc.id.goog`). The annotation holds a `PROJECT_ID` placeholder that the deployment pipeline replaces with the real project ID, so the manifest is only meant to be applied through the pipeline.
+
+To run a backup right away instead of waiting for midnight:
+
+```bash
+kubectl create job --from=cronjob/todo-backup-job backup-now -n project
+kubectl logs -n project job/backup-now -f
+```
 
 ## Running it
 

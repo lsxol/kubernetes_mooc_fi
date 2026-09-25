@@ -47,6 +47,9 @@ jobs:
           project_id: '${{ env.PROJECT_ID }}'
           location: '${{ env.GKE_ZONE }}'
       
+      - name: 'Inject project ID into the manifests'
+        run: sed -i "s/PROJECT_ID/${{ env.PROJECT_ID }}/g" todo-backend-app/manifests/backupcronjob.yaml
+      
       - name : 'Form the image name'
         run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE_FRONTEND:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
       - name : 'Form the backend image name'

@@ -6,3 +6,4 @@ resources:
 - deployment.yaml
 - cronjob.yaml
 - service.yaml
+- backupcronjob.yaml

@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: todo-backup-sa
+  namespace: project
+  annotations:
+    iam.gke.io/gcp-service-account: todo-backup-gsa@PROJECT_ID.iam.gserviceaccount.com
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: todo-backup-job
+  namespace: project
+spec:
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: todo-backup-sa 
+          containers:
+          - name: backup
+            image: google/cloud-sdk:alpine
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Installing postgresql-client..."
+              apk add --no-cache postgresql17-client
+              
+              echo "Dumping database..."
+              pg_dump > /tmp/backup.sql
+              
+              echo "Uploading to Google Cloud Storage..."
+              gcloud storage cp /tmp/backup.sql gs://$BUCKET_NAME/todo-backup-$(date +%Y-%m-%d_%H-%M).sql
+              
+              echo "Backup completed!"
+            env:
+            - name: PGHOST
+              value: "postgresql-todo-svc" 
+            - name: PGUSER
+              value: "postgres"
+            - name: PGDATABASE
+              value: "postgres"
+            - name: BUCKET_NAME
+              value: "lsxol-todo-backups" 
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-todo-secrets
+                  key: POSTGRES_PASSWORD_TODO
+          restartPolicy: OnFailure
