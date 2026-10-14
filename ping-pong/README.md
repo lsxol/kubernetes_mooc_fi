@@ -14,7 +14,7 @@ Since exercise 3.4 the app doesn't know it's published under `/pingpong`. It ser
 
 ## Where the count lives
 
-It's a single row in a `counter` table. Liquibase creates the table and inserts that row when the app starts, using `src/main/resources/db/changeLog.sql`. There's nothing to set up in the database by hand.
+It's a single row in a `counter` table. Liquibase creates the table and inserts that row, using `src/main/resources/db/changeLog.sql`. In tests and dev mode that happens when the app starts. In the cluster it happens on the first readiness check that can reach the database (`DatabaseReadiness.java`), so the pod starts and waits at `0/1` instead of crashing when Postgres isn't up yet. `GET /healthz` answers 200 only once the database is reachable and migrated, and that's what the Deployment's readinessProbe checks. There's nothing to set up in the database by hand.
 
 Postgres itself runs as a StatefulSet with a volumeClaimTemplate, next to a headless Service (`clusterIP: None`) so the pod always has the same name to connect to.
 

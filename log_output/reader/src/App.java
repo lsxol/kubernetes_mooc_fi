@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 
 public class App {
  
@@ -39,6 +40,20 @@ public class App {
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(response.getBytes());
             }
+        });
+        server.createContext("/healthz", exchange -> {
+            int status;
+            try {
+                HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(System.getenv("URI_PINGPONG") + "/count"))
+                .timeout(Duration.ofSeconds(2))
+                .build();
+            status = client.send(request, HttpResponse.BodyHandlers.discarding()).statusCode() == 200 ? 200 : 503;
+            } catch (Exception e) {
+                status = 503;
+            }
+            exchange.sendResponseHeaders(status, -1);
+            exchange.close();
         });
         server.start();
     }

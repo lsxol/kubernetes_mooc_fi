@@ -27,6 +27,13 @@ spec:
               mountPath: /usr/src/app/files
         - name: log-reader
           image: lsxol/log-reader:latest
+          readinessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            httpGet:
+              path: /healthz
+              port: 8080
           volumeMounts:
             - name: shared-volume
               mountPath: /usr/src/app/files
