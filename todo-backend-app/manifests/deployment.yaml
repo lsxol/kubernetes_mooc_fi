@@ -16,6 +16,13 @@ spec:
       containers:
         - name: todo-backend-app
           image: lsxol/todo-backend-app:latest
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           env:
             - name: POSTGRES_HOST
               value: postgresql-todo-svc

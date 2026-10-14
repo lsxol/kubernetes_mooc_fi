@@ -16,6 +16,13 @@ spec:
       containers:
         - name: todo-app
           image: lsxol/todo-app:latest
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi
           envFrom:
             - configMapRef:
                 name: todo-app-configmap

@@ -41,6 +41,7 @@ Each exercise number below links to its release. The column next to it links to 
 | **[3.8](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.8)** | The project, step 17 | [`.github/workflows/delete-env.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/3.8/.github/workflows/delete-env.yaml) |
 | **[3.9](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.9)** | DBaaS vs DIY | [`README.md`](https://github.com/lsxol/kubernetes_mooc_fi/blob/3.9/README.md#39-dbaas-vs-diy) |
 | **[3.10](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.10)** | The project, step 18 | [`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.10/todo-backend-app) |
+| **[3.11](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.11)** | The project, step 19 | [`todo-app/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.11/todo-app/todo-app)<br>[`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.11/todo-backend-app) |
 ## The apps
 
 - [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) is the log output app, a writer and a reader container sharing a volume
