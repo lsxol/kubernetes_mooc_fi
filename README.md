@@ -47,6 +47,7 @@ Each exercise number below links to its release. The column next to it links to 
 | **[4.2](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.2)** | The project, step 21 | [`todo-app/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.2/todo-app/todo-app)<br>[`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.2/todo-backend-app) |
 | **[4.3](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.3)** | Prometheus | [`README.md`](https://github.com/lsxol/kubernetes_mooc_fi/blob/4.3/README.md#43-prometheus) |
 | **[4.4](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.4)** | Your canary | [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.4/ping-pong) |
+| **[4.5](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.5)** | The project, step 22 | [`todo-app/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.5/todo-app/todo-app)<br>[`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.5/todo-backend-app) |
 ## The apps
 
 - [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) is the log output app, a writer and a reader container sharing a volume
