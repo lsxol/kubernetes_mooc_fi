@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: project
+  name: broadcaster-config
+data:
+  WEBHOOK_URL: https://webhook.site/81966cd6-20ef-4f2d-b377-aef9c9de68f1

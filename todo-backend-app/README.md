@@ -20,6 +20,16 @@ A `todo` table in PostgreSQL. Liquibase creates the table and its sequence from 
 
 The `done` column came in 4.5 as a third changeset, `ALTER TABLE todo ADD COLUMN done BOOLEAN NOT NULL DEFAULT FALSE`, so a database that already has todos keeps them and they all start as not done. The earlier changesets must never be edited: Liquibase stores a checksum of every changeset it has run and refuses to migrate when one of them changes, which would leave the backend stuck at `0/1`.
 
+## Messages to NATS
+
+Since 4.6 every created or updated todo is also published to NATS, on the subject `todos`, as `{"action": "created" | "updated", "id": ..., "value": ..., "done": ...}`. The [broadcaster](../broadcaster) picks it up from there and forwards it to a chat webhook.
+
+`TodoBackend` only fires a CDI event. `TodoPublisher` observes it with `@Observes(during = TransactionPhase.AFTER_SUCCESS)`, so the message goes out after the transaction has committed. A todo that failed to save is never announced.
+
+NATS is optional for the backend. It connects in the background and keeps reconnecting, and while it isn't connected the todo is still saved and the message is skipped with a warning in the log. The exercise allows missing messages, only duplicates are a problem. NATS is not part of the readiness probe either, so a NATS outage doesn't take the todo list down.
+
+## Where Postgres runs
+
 Postgres runs as a StatefulSet with a volumeClaimTemplate, next to a headless Service so the pod has a stable name. The claim has no `storageClassName`, so it gets whatever the cluster's default is: `standard-rwo` on GKE, `local-path` on k3d. Naming `local-path` explicitly, as it was before 3.5, leaves the claim `Pending` on GKE.
 
 ## Config
@@ -27,6 +37,7 @@ Postgres runs as a StatefulSet with a volumeClaimTemplate, next to a headless Se
 - `PORT` sets the HTTP port, defaults to 8080
 - `POSTGRES_HOST` is set in the Deployment to `postgresql-todo-svc`
 - `POSTGRES_PASSWORD` comes from the Secret `postgresql-todo-secrets`, key `POSTGRES_PASSWORD_TODO`
+- `NATS_URL` is set in the Deployment to `nats://my-nats.nats.svc.cluster.local:4222`, defaults to `nats://localhost:4222`
 
 The Secret in the repo holds a dummy password on purpose. This is a public course repo and the database only runs on a throwaway course cluster. `kind: Secret` only base64-encodes the value, don't copy this anywhere real.
 

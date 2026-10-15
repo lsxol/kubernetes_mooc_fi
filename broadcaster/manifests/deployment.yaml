@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: project
+  name: broadcaster
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: broadcaster
+  template:
+    metadata:
+      labels:
+        app: broadcaster
+    spec:
+      containers:
+        - name: broadcaster
+          image: lsxol/broadcaster:latest
+          resources:
+            requests:
+              cpu: 10m
+              memory: 96Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            httpGet:
+              path: /healthz/ready
+              port: 8080
+          livenessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            httpGet:
+              path: /healthz/live
+              port: 8080
+          env:
+            - name: NATS_URL
+              value: nats://my-nats.nats.svc.cluster.local:4222
+            - name: WEBHOOK_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: broadcaster-config
+                  key: WEBHOOK_URL

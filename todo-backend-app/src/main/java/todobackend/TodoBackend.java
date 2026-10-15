@@ -1,6 +1,8 @@
 package todobackend;
 
 import io.quarkus.panache.common.Sort;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -16,6 +18,9 @@ import io.quarkus.logging.Log;
 
 @Path("/todos")
 public class TodoBackend {
+
+    @Inject
+    Event<TodoEvent> events;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -36,6 +41,7 @@ public class TodoBackend {
         Todo newTodo = new Todo();
         newTodo.value = todo.trim();
         newTodo.persist();
+        events.fire(TodoEvent.of("created", newTodo));
     }
 
     @PUT
@@ -51,6 +57,7 @@ public class TodoBackend {
         }
         Log.info("Setting todo " + id + " done: " + update.done);
         todo.done = update.done;
+        events.fire(TodoEvent.of("updated", todo));
         return todo;
     }
 }

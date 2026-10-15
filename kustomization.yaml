@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - todo-app/todo-app/manifests
   - todo-backend-app/manifests
+  - broadcaster/manifests

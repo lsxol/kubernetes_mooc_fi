@@ -16,6 +16,7 @@ env:
   REPOSITORY: my-repository
   IMAGE_FRONTEND: todo-app
   IMAGE_BACKEND: todo-backend-app
+  IMAGE_BROADCASTER: broadcaster
   BRANCH: ${{ github.ref_name }}
   NAMESPACE: ${{ github.ref_name == 'master' && 'project' || github.ref_name }}
 
@@ -54,6 +55,8 @@ jobs:
         run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE_FRONTEND:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
       - name : 'Form the backend image name'
         run: echo "BACKEND_IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE_BACKEND:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
+      - name : 'Form the broadcaster image name'
+        run: echo "BROADCASTER_IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE_BROADCASTER:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
 
       - name: Install java
         uses: actions/setup-java@v5
@@ -69,10 +72,16 @@ jobs:
         working-directory: todo-backend-app
         run: ./gradlew build -x test
 
+      - name: Build broadcaster
+        working-directory: broadcaster
+        run: ./gradlew build -x test
+
       - name: Build frontend image
         run: docker build -f todo-app/todo-app/src/main/docker/Dockerfile.jvm --tag $IMAGE_TAG todo-app/todo-app
       - name: Build backend image
         run: docker build -f todo-backend-app/src/main/docker/Dockerfile.jvm --tag $BACKEND_IMAGE_TAG todo-backend-app
+      - name: Build broadcaster image
+        run: docker build -f broadcaster/src/main/docker/Dockerfile.jvm --tag $BROADCASTER_IMAGE_TAG broadcaster
 
       - name: Configure Docker
         run: gcloud --quiet auth configure-docker $REGISTRY
@@ -83,6 +92,9 @@ jobs:
       - name: Publish backend image
         run: docker push $BACKEND_IMAGE_TAG
 
+      - name: Publish broadcaster image
+        run: docker push $BROADCASTER_IMAGE_TAG
+
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v3
 
@@ -91,6 +103,8 @@ jobs:
           kustomize edit set namespace ${NAMESPACE}
           kustomize edit set image lsxol/todo-app=$IMAGE_TAG
           kustomize edit set image lsxol/todo-backend-app=$BACKEND_IMAGE_TAG
+          kustomize edit set image lsxol/broadcaster=$BROADCASTER_IMAGE_TAG
           kustomize build . | kubectl apply -f -
           kubectl rollout status deployment/todo-app -n ${NAMESPACE}
           kubectl rollout status deployment/todo-backend-app -n ${NAMESPACE}
+          kubectl rollout status deployment/broadcaster -n ${NAMESPACE}

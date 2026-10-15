@@ -17,6 +17,7 @@ dependencies {
     implementation 'io.quarkus:quarkus-liquibase'
     implementation 'io.quarkus:quarkus-hibernate-orm-panache'
     implementation 'io.quarkus:quarkus-smallrye-health'
+    implementation 'io.nats:jnats:2.26.3'
     testImplementation 'io.quarkus:quarkus-junit'
     testImplementation 'io.rest-assured:rest-assured'
 }
