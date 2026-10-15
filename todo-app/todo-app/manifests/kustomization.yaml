@@ -7,3 +7,4 @@ resources:
 - route.yaml
 - service.yaml
 - gateway.yaml
+- healthcheckpolicy.yaml

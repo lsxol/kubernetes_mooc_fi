@@ -10,6 +10,17 @@ The project frontend. A Quarkus app that serves one HTML page with a random pict
 
 `GET /todos` and `POST /todos` are forwarded to the backend at `TODO_BACKEND_URL`. The page only ever talks to this app, never to the backend directly. If the backend can't be reached the answer is `502`.
 
+`POST /break` is what the "Break the app" button on the page calls. It flips a flag in `AppState.java`, and from then on every request except the health endpoints gets a `500` "System Failure" page. Nothing resets the flag; the liveness probe notices and Kubernetes restarts the container, which starts with a healthy app again.
+
+## Probes
+
+`quarkus-smallrye-health` serves the health endpoints under `/healthz` (`quarkus.smallrye-health.root-path`). The checks are in `HealthChecks.java`:
+
+- `GET /healthz/live` is the liveness probe. It only looks at the break flag and answers `503` once the app is broken. After three failures in a row (about 30 seconds) the kubelet restarts the container: the pod keeps its name and its `RESTARTS` count goes up.
+- `GET /healthz/ready` is the readiness probe. It asks the backend's own `/healthz/ready`, which is only `200` when the backend has its database. Until then the pod stays `0/1` and gets no traffic.
+
+The database is deliberately not part of liveness. If Postgres went down, restarting the frontend over and over wouldn't fix anything.
+
 ## Config
 
 All of it comes from the ConfigMap `todo-app-configmap`, loaded with `envFrom`:
@@ -30,11 +41,12 @@ Everything goes into the `project` namespace.
 - `manifests/service.yaml` is a ClusterIP Service on port 2345, forwarding to 8080
 - `manifests/gateway.yaml` is the Gateway, class `gke-l7-global-external-managed`, one HTTP listener on port 80
 - `manifests/route.yaml` is the HTTPRoute, a single rule sending `/` to this app
+- `manifests/healthcheckpolicy.yaml` points the load balancer's health check at `/healthz/ready`
 - `manifests/kustomization.yaml` lists the files above
 
 There is only one route rule on purpose. The backend has no rule of its own, so it can't be reached from outside the cluster; the frontend calls it through its Service. Gateway and HTTPRoute are for traffic coming in, pods talk to each other through Services without them.
 
-The load balancer's default health check asks for `/`, which this app answers with the page, so no HealthCheckPolicy is needed here.
+The load balancer's default health check asks for `/`. Since 4.2 a broken app answers `/` with `500`, and the load balancer would take the pod out before the "System Failure" page is ever seen, so the HealthCheckPolicy sends it to `/healthz/ready` instead. Breaking the app doesn't touch readiness, so the page stays reachable until the restart.
 
 Up to exercise 2.10 the picture lived on a local PersistentVolume pinned to a k3d node, and the app was exposed by an Ingress. Both are gone since 3.5: the picture is only a cache, so an `emptyDir` is enough, and the node the volume was pinned to doesn't exist on GKE.
 

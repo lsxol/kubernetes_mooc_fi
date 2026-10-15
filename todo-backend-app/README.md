@@ -8,9 +8,13 @@ The project backend. A Quarkus app that keeps the todos in PostgreSQL.
 
 `POST /todos` takes the todo as `text/plain` in the body and stores it. Every request is logged. A todo longer than 140 characters is logged as an error and not stored.
 
+`GET /healthz/ready` is the readiness probe. It is `200` only when the database is reachable and migrated (`DatabaseReadiness.java` plus the datasource check that `quarkus-smallrye-health` adds by itself). The frontend's readiness check calls this endpoint too.
+
+`GET /healthz/live` is the liveness probe. It has no checks of its own, so it is `200` as long as the app answers at all. The database is left out on purpose: a database outage shouldn't make Kubernetes restart the backend in a loop.
+
 ## Where the todos live
 
-A `todo` table in PostgreSQL. Liquibase creates the table and its sequence when the app starts, from `src/main/resources/db/changeLog.sql`.
+A `todo` table in PostgreSQL. Liquibase creates the table and its sequence from `src/main/resources/db/changeLog.sql`. In tests and dev mode that happens when the app starts. In the cluster it happens on the first readiness check that can reach the database, so the app starts even when Postgres isn't up yet.
 
 Postgres runs as a StatefulSet with a volumeClaimTemplate, next to a headless Service so the pod has a stable name. The claim has no `storageClassName`, so it gets whatever the cluster's default is: `standard-rwo` on GKE, `local-path` on k3d. Naming `local-path` explicitly, as it was before 3.5, leaves the claim `Pending` on GKE.
 
@@ -61,7 +65,7 @@ kubectl apply -k .
 
 See the [todo-app README](../todo-app/todo-app/README.md) for the Gateway API prerequisite and how to find the address.
 
-The backend pod usually restarts once on a fresh deploy. It starts faster than Postgres, fails to connect, and comes up fine on the second try.
+On a fresh deploy the backend usually starts before Postgres. Up to 4.1 that cost one restart; since 4.2 the pod just sits at `0/1` until the database answers.
 
 To build and push the image:
 

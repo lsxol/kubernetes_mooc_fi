@@ -1,0 +1,15 @@
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: todo-app-healthcheck-policy
+  namespace: project
+spec:
+  default:
+    config:
+      httpHealthCheck:
+        requestPath: /healthz/ready
+      type: HTTP
+  targetRef:
+    group: ""
+    kind: Service
+    name: todo-app-service

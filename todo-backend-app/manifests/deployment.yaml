@@ -23,6 +23,18 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          readinessProbe:
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            httpGet:
+              path: /healthz/ready
+              port: 8080
+          livenessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            httpGet:
+              path: /healthz/live
+              port: 8080
           env:
             - name: POSTGRES_HOST
               value: postgresql-todo-svc

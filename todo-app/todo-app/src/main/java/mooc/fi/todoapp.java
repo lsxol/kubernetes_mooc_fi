@@ -9,6 +9,7 @@ import java.time.Instant;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -31,6 +32,9 @@ public class todoapp {
 
     @ConfigProperty(name = "fresh.timer")
     int freshTimer;
+
+    @Inject
+    AppState state;
 
     private final HttpClient client = HttpClient.newHttpClient();
 
@@ -74,6 +78,12 @@ public class todoapp {
             Thread.currentThread().interrupt();
             return Response.status(Response.Status.BAD_GATEWAY).build();
         }
+    }
+
+    @POST
+    @Path("/break")
+    public void breakApp() {
+        state.breakApp();
     }
 
     @GET
