@@ -44,6 +44,7 @@ Each exercise number below links to its release. The column next to it links to 
 | **[3.11](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.11)** | The project, step 19 | [`todo-app/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.11/todo-app/todo-app)<br>[`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/3.11/todo-backend-app) |
 | **[3.12](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.12)** | The project, step 20 | [`todo-backend-app/images/logs_screen.png`](https://github.com/lsxol/kubernetes_mooc_fi/blob/3.12/todo-backend-app/images/logs_screen.png) |
 | **[4.1](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.1)** | Readiness probe | [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.1/ping-pong)<br>[`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.1/log_output) |
+| **[4.2](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.2)** | The project, step 21 | [`todo-app/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.2/todo-app/todo-app)<br>[`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.2/todo-backend-app) |
 ## The apps
 
 - [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) is the log output app, a writer and a reader container sharing a volume

@@ -39,8 +39,6 @@ public class AppState {
         healthy = false;
     }
 
-    // Once broken, every request except the health endpoints gets the failure page,
-    // until the liveness probe fails and Kubernetes restarts the container.
     void installBreakFilter(@Observes Router router) {
         router.route().order(-100).handler(ctx -> {
             if (healthy || ctx.normalizedPath().startsWith("/healthz")) {

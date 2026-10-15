@@ -27,14 +27,12 @@ public class HealthChecks {
 
     private final HttpClient client = HttpClient.newHttpClient();
 
-    // Liveness: only the app itself. A failure here makes the kubelet restart the container.
     @Produces
     @Liveness
     HealthCheck app() {
         return () -> state.isHealthy() ? HealthCheckResponse.up("app") : HealthCheckResponse.down("app");
     }
 
-    // Readiness: the backend answers and has its database. A failure only takes the pod out of the Service.
     @Produces
     @Readiness
     HealthCheck backend() {
