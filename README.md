@@ -45,6 +45,7 @@ Each exercise number below links to its release. The column next to it links to 
 | **[3.12](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/3.12)** | The project, step 20 | [`todo-backend-app/images/logs_screen.png`](https://github.com/lsxol/kubernetes_mooc_fi/blob/3.12/todo-backend-app/images/logs_screen.png) |
 | **[4.1](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.1)** | Readiness probe | [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.1/ping-pong)<br>[`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.1/log_output) |
 | **[4.2](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.2)** | The project, step 21 | [`todo-app/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.2/todo-app/todo-app)<br>[`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.2/todo-backend-app) |
+| **[4.3](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.3)** | Prometheus | [`README.md`](https://github.com/lsxol/kubernetes_mooc_fi/blob/4.3/README.md#43-prometheus) |
 ## The apps
 
 - [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) is the log output app, a writer and a reader container sharing a volume
@@ -90,3 +91,21 @@ The workflow logs in to Google Cloud with Workload Identity Federation, so there
 * **Setup (Work & Cost):** Requires a lot of work to write and test YAML files (StatefulSets, PVCs, Services). Costs nothing extra beyond your existing cluster compute resources.
 * **Maintenance:** High effort. You have to manually handle version updates, crashes, and monitoring.
 * **Backups:** Manual setup is required (for example, writing custom CronJobs to dump data). Restoring data is harder, requires command-line tools, and takes more time.
+
+## 4.3. Prometheus
+
+Prometheus runs on the local k3d cluster, installed with Helm as the release `prom` in the `monitoring` namespace. The GUI is reached through the Service:
+
+```bash
+kubectl port-forward svc/prom-prometheus-server -n monitoring 9090:80
+```
+
+The number of pods created by StatefulSets in `monitoring`:
+
+```
+sum(kube_pod_info{namespace="monitoring", created_by_kind="StatefulSet"})
+```
+
+`kube_pod_info` has one series per pod with the value `1`, so the sum is the pod count. The three pods are Loki's: `loki-0`, `loki-chunks-cache-0` and `loki-results-cache-0`.
+
+![Prometheus query result](images/prometheus_query.png)
