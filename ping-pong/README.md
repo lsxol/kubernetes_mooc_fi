@@ -32,10 +32,27 @@ Everything goes into the `exercises` namespace.
 
 - `manifests/secret.yaml` is the Secret with the database password
 - `manifests/postgresql.yaml` has the StatefulSet and its headless Service
-- `manifests/deployment.yaml` is the app
+- `manifests/deployment.yaml` is the app. Since 4.4 it is an Argo Rollouts `Rollout`, not a `Deployment`, see below
+- `manifests/analysistemplate.yaml` is the AnalysisTemplate the Rollout runs during an update
 - `manifests/service.yaml` is a ClusterIP Service on port 80, forwarding to 8080
 
 The routing for `/pingpong` isn't here. It lives in [log_output/manifests/route.yaml](../log_output/manifests/route.yaml), an HTTPRoute attached to the Gateway in the same folder, together with the rule for the log output app. The [HealthCheckPolicy](../log_output/manifests/healthcheckpolicy.yaml) that makes the load balancer check `/count` instead of `/` is there too, next to the Gateway it belongs to. The health check talks to the pod directly, so the rewrite doesn't apply to it, and it has to use the app's own paths. It must not use `/`: that endpoint increments the counter, and the load balancer would bump it every 15 seconds on its own.
+
+## Canary updates
+
+The app is updated as a canary by [Argo Rollouts](https://argoproj.github.io/argo-rollouts/). On every change to the pod template the Rollout first moves half of the replicas to the new version (`setWeight: 50`), then runs the `cpu-usage` AnalysisTemplate before going any further.
+
+The analysis asks Prometheus once a minute, five times, for the CPU used by all containers in the namespace:
+
+```
+scalar(sum(rate(container_cpu_usage_seconds_total{namespace="exercises", container!=""}[2m])))
+```
+
+If any of those five answers is 0.3 cores or more, the analysis fails, the Rollout aborts and the old version keeps running. Normally the whole namespace uses about 0.001 cores, and starting all the JVMs after a reboot peaked at about 0.1, so 0.3 lets a normal update through and stops one that makes the CPU use jump.
+
+Two details in the query: Prometheus scrapes every minute here, so a `rate` window shorter than `[2m]` has fewer than two samples and returns nothing. And `container!=""` drops the per-pod series that cAdvisor reports next to the per-container ones, which would otherwise double the sum.
+
+Setting the threshold to something below the normal usage, like `result < 0.0001`, makes every update fail its first measurement, so the app is never updated.
 
 ## Running it
 
@@ -58,13 +75,27 @@ docker build -f src/main/docker/Dockerfile.jvm -t lsxol/ping-pong:latest .
 docker push lsxol/ping-pong:latest
 ```
 
+Argo Rollouts has to be in the cluster before the Rollout and the AnalysisTemplate can be applied, and the analysis expects the Prometheus Helm release `prom` in the `monitoring` namespace:
+
+```bash
+kubectl create namespace argo-rollouts
+kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+```
+
 Then apply the rest. The database should be up before the app, but the whole folder at once works fine too:
 
 ```bash
 kubectl apply -f ping-pong/manifests/
 ```
 
-It shows up at `http://<gateway ip>/pingpong`, where the IP comes from `kubectl get gateway -n exercises` once the Gateway from log_output is applied. The image tag is always `latest`, so after pushing a new build `kubectl apply` sees no change; use `kubectl rollout restart deployment ping-pong -n exercises` to get the new image running. See the [log_output README](../log_output/README.md) for enabling the Gateway API on the cluster.
+It shows up at `http://<gateway ip>/pingpong`, where the IP comes from `kubectl get gateway -n exercises` once the Gateway from log_output is applied. The image tag is always `latest`, so after pushing a new build `kubectl apply` sees no change. Any change to the pod template starts a new canary, for example a new annotation:
+
+```bash
+kubectl -n exercises patch rollout ping-pong --type merge -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"redeploy\":\"$(date +%s)\"}}}}}"
+kubectl get rollout,analysisrun -n exercises -w
+```
+
+See the [log_output README](../log_output/README.md) for enabling the Gateway API on the cluster.
 
 ## Development
 
