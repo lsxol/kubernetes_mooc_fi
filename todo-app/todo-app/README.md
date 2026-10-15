@@ -8,7 +8,9 @@ The project frontend. A Quarkus app that serves one HTML page with a random pict
 
 `GET /image` returns the picture. The app downloads one from `PICSUM_URL`, keeps it in a file and serves that file until it is older than `FRESH_TIMER` seconds, then fetches a new one.
 
-`GET /todos` and `POST /todos` are forwarded to the backend at `TODO_BACKEND_URL`. The page only ever talks to this app, never to the backend directly. If the backend can't be reached the answer is `502`.
+`GET /todos`, `POST /todos` and `PUT /todos/<id>` are forwarded to the backend at `TODO_BACKEND_URL`. The page only ever talks to this app, never to the backend directly. If the backend can't be reached the answer is `502`.
+
+Each todo on the page has a "Mark done" button. It sends `PUT /todos/<id>` with `{"done": true}` and reloads the list; a done todo is greyed out and crossed out, with "Done" in place of the button.
 
 `POST /break` is what the "Break the app" button on the page calls. It flips a flag in `AppState.java`, and from then on every request except the health endpoints gets a `500` "System Failure" page. Nothing resets the flag; the liveness probe notices and Kubernetes restarts the container, which starts with a healthy app again.
 

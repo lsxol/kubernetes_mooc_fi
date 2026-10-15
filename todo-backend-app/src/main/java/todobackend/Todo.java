@@ -9,4 +9,6 @@ import jakarta.persistence.Table;
 public class Todo extends PanacheEntity {
 
     public String value;
+
+    public boolean done;
 }

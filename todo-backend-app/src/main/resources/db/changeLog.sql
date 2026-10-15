@@ -6,3 +6,6 @@ CREATE TABLE todo (
     
 --changeset danielkazmierczak:2
 Create sequence todo_seq START WITH 1 INCREMENT BY 1;
+
+--changeset danielkazmierczak:3
+ALTER TABLE todo ADD COLUMN done BOOLEAN NOT NULL DEFAULT FALSE;

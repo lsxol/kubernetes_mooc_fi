@@ -4,9 +4,11 @@ The project backend. A Quarkus app that keeps the todos in PostgreSQL.
 
 ## Endpoints
 
-`GET /todos` returns all todos as a JSON array of strings.
+`GET /todos` returns all todos as a JSON array of objects, `[{"id": 1, "value": "Learn Kubernetes", "done": false}, ...]`, ordered by `id`. Without the ordering Postgres tends to return a row that was just updated at the end of the list, so marking a todo done would make it jump to the bottom of the page. Up to 4.4 this was a plain array of strings.
 
-`POST /todos` takes the todo as `text/plain` in the body and stores it. Every request is logged. A todo longer than 140 characters is logged as an error and not stored.
+`POST /todos` takes the todo as `text/plain` in the body and stores it, not done. Every request is logged. A todo longer than 140 characters is logged as an error and not stored.
+
+`PUT /todos/<id>` takes `{"done": true}` (or `false`) as `application/json` and sets the todo's `done` field. It answers `200` with the updated todo, or `404` if there is no todo with that id.
 
 `GET /healthz/ready` is the readiness probe. It is `200` only when the database is reachable and migrated (`DatabaseReadiness.java` plus the datasource check that `quarkus-smallrye-health` adds by itself). The frontend's readiness check calls this endpoint too.
 
@@ -15,6 +17,8 @@ The project backend. A Quarkus app that keeps the todos in PostgreSQL.
 ## Where the todos live
 
 A `todo` table in PostgreSQL. Liquibase creates the table and its sequence from `src/main/resources/db/changeLog.sql`. In tests and dev mode that happens when the app starts. In the cluster it happens on the first readiness check that can reach the database, so the app starts even when Postgres isn't up yet.
+
+The `done` column came in 4.5 as a third changeset, `ALTER TABLE todo ADD COLUMN done BOOLEAN NOT NULL DEFAULT FALSE`, so a database that already has todos keeps them and they all start as not done. The earlier changesets must never be edited: Liquibase stores a checksum of every changeset it has run and refuses to migrate when one of them changes, which would leave the backend stuck at `0/1`.
 
 Postgres runs as a StatefulSet with a volumeClaimTemplate, next to a headless Service so the pod has a stable name. The claim has no `storageClassName`, so it gets whatever the cluster's default is: `standard-rwo` on GKE, `local-path` on k3d. Naming `local-path` explicitly, as it was before 3.5, leaves the claim `Pending` on GKE.
 
