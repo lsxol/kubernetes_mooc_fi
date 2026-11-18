@@ -16,6 +16,7 @@ jobs:
   build-publish:
     name: Build, publish and release
     runs-on: ubuntu-latest
+    environment: GKE_PROJECT
 
     steps:
       - name: Checkout
