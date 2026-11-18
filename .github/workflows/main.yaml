@@ -4,14 +4,25 @@ on:
   push:
     branches:
       - master
+    tags:
+      - '*'
     paths:
       - 'todo-app/**'
       - 'todo-backend-app/**'
       - 'broadcaster/**'
+      - 'project/base/**'
       - '.github/workflows/main.yaml'
 
 permissions:
   contents: write
+
+concurrency:
+  group: project-release
+  cancel-in-progress: false
+
+env:
+  OVERLAY: ${{ github.ref_type == 'tag' && 'project/overlays/production' || 'project/overlays/staging' }}
+  IMAGE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
 
 jobs:
   build-publish:
@@ -49,30 +60,37 @@ jobs:
 
       - name: Build and publish frontend image
         run: |
-          docker build -f todo-app/todo-app/src/main/docker/Dockerfile.jvm -t lsxol/todo-app:${GITHUB_SHA} todo-app/todo-app
-          docker push lsxol/todo-app:${GITHUB_SHA}
+          docker build -f todo-app/todo-app/src/main/docker/Dockerfile.jvm -t lsxol/todo-app:${IMAGE_TAG} todo-app/todo-app
+          docker push lsxol/todo-app:${IMAGE_TAG}
 
       - name: Build and publish backend image
         run: |
-          docker build -f todo-backend-app/src/main/docker/Dockerfile.jvm -t lsxol/todo-backend-app:${GITHUB_SHA} todo-backend-app
-          docker push lsxol/todo-backend-app:${GITHUB_SHA}
+          docker build -f todo-backend-app/src/main/docker/Dockerfile.jvm -t lsxol/todo-backend-app:${IMAGE_TAG} todo-backend-app
+          docker push lsxol/todo-backend-app:${IMAGE_TAG}
 
       - name: Build and publish broadcaster image
         run: |
-          docker build -f broadcaster/src/main/docker/Dockerfile.jvm -t lsxol/broadcaster:${GITHUB_SHA} broadcaster
-          docker push lsxol/broadcaster:${GITHUB_SHA}
+          docker build -f broadcaster/src/main/docker/Dockerfile.jvm -t lsxol/broadcaster:${IMAGE_TAG} broadcaster
+          docker push lsxol/broadcaster:${IMAGE_TAG}
+
+      - name: Switch to master
+        if: github.ref_type == 'tag'
+        run: |
+          git fetch --depth=1 origin master
+          git checkout -B master origin/master
 
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v3
 
       - name: Update image tags
+        working-directory: ${{ env.OVERLAY }}
         run: |
-          kustomize edit set image lsxol/todo-app=lsxol/todo-app:${GITHUB_SHA}
-          kustomize edit set image lsxol/todo-backend-app=lsxol/todo-backend-app:${GITHUB_SHA}
-          kustomize edit set image lsxol/broadcaster=lsxol/broadcaster:${GITHUB_SHA}
+          kustomize edit set image lsxol/todo-app=lsxol/todo-app:${IMAGE_TAG}
+          kustomize edit set image lsxol/todo-backend-app=lsxol/todo-backend-app:${IMAGE_TAG}
+          kustomize edit set image lsxol/broadcaster=lsxol/broadcaster:${IMAGE_TAG}
 
       - name: Commit updated kustomization.yaml
         uses: EndBug/add-and-commit@v10
         with:
-          add: 'kustomization.yaml'
-          message: "New project version released ${{ github.sha }}"
+          add: '${{ env.OVERLAY }}/kustomization.yaml'
+          message: "Release ${{ env.IMAGE_TAG }} to ${{ github.ref_type == 'tag' && 'production' || 'staging' }}"

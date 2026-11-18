@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: project-staging
+resources:
+  - ../../base
+patches:
+  # staging broadcaster only logs the messages, nothing is sent to the webhook
+  - target:
+      kind: Deployment
+      name: broadcaster
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: FORWARD_ENABLED
+          value: "false"
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: NATS_SUBJECT
+          value: todos-staging
+  - target:
+      kind: Deployment
+      name: todo-backend-app
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: NATS_SUBJECT
+          value: todos-staging
+  # staging database is not backed up
+  - patch: |-
+      $patch: delete
+      apiVersion: batch/v1
+      kind: CronJob
+      metadata:
+        name: todo-backup-job
+        namespace: project
+  - patch: |-
+      $patch: delete
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: todo-backup-sa
+        namespace: project

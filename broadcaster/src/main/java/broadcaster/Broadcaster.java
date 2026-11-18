@@ -22,14 +22,19 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class Broadcaster {
 
-    static final String SUBJECT = "todos";
     static final String QUEUE_GROUP = "broadcaster";
 
     @ConfigProperty(name = "nats.url")
     String natsUrl;
 
+    @ConfigProperty(name = "nats.subject")
+    String subject;
+
     @ConfigProperty(name = "webhook.url")
     String webhookUrl;
+
+    @ConfigProperty(name = "forward.enabled")
+    boolean forwardEnabled;
 
     @Inject
     ObjectMapper mapper;
@@ -45,8 +50,9 @@ public class Broadcaster {
                     Log.info("NATS " + type);
                     if (type == ConnectionListener.Events.CONNECTED) {
                         connection = conn;
-                        conn.createDispatcher(this::forward).subscribe(SUBJECT, QUEUE_GROUP);
-                        Log.info("Listening on " + SUBJECT + " in queue group " + QUEUE_GROUP);
+                        conn.createDispatcher(this::forward).subscribe(subject, QUEUE_GROUP);
+                        Log.info("Listening on " + subject + " in queue group " + QUEUE_GROUP
+                                + (forwardEnabled ? ", forwarding to webhook" : ", log only"));
                     }
                 })
                 .build();
@@ -67,6 +73,10 @@ public class Broadcaster {
         try {
             TodoEvent todo = mapper.readValue(message.getData(), TodoEvent.class);
             String text = todo.describe();
+            if (!forwardEnabled) {
+                Log.info("Received \"" + text + "\" (forwarding disabled)");
+                return;
+            }
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(webhookUrl))
                     .header("Content-Type", "application/json")

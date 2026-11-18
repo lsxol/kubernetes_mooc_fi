@@ -18,10 +18,11 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 @ApplicationScoped
 public class TodoPublisher {
 
-    static final String SUBJECT = "todos";
-
     @ConfigProperty(name = "nats.url")
     String natsUrl;
+
+    @ConfigProperty(name = "nats.subject")
+    String subject;
 
     @Inject
     ObjectMapper mapper;
@@ -54,8 +55,8 @@ public class TodoPublisher {
             return;
         }
         try {
-            connection.publish(SUBJECT, mapper.writeValueAsBytes(event));
-            Log.info("Published " + event.action() + " of todo " + event.id() + " to " + SUBJECT);
+            connection.publish(subject, mapper.writeValueAsBytes(event));
+            Log.info("Published " + event.action() + " of todo " + event.id() + " to " + subject);
         } catch (JsonProcessingException e) {
             Log.error("Could not publish todo " + event.id(), e);
         }
