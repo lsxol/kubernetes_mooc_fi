@@ -35,7 +35,7 @@ public class App {
             String response = "file content: " + fileContent
                 + "\nenv variable: MESSAGE=" + System.getenv("MESSAGE")
                 + "\n" + uuidFromLog
-                + "\nPing / Pongs: " + pingPongCount;
+                + "\nPing-Pongs: " + pingPongCount;
             exchange.sendResponseHeaders(200, response.getBytes().length);
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(response.getBytes());
