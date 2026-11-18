@@ -12,9 +12,6 @@ spec:
     canary:
       steps:
         - setWeight: 50
-        - analysis:
-            templates:
-              - templateName: cpu-usage
   template:
     metadata:
       labels:

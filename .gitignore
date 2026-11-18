@@ -3,6 +3,6 @@
 CLAUDE.md
 .vscode/
 *.code-workspace
-
+.idea/
 # OS
 .DS_Store
