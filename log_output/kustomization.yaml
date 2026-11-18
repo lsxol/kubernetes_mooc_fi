@@ -1,5 +1,15 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - manifests
-  - ../ping-pong/manifests
+- manifests
+- ../ping-pong/manifests
+images:
+- name: lsxol/log-output
+  newName: lsxol/log-output
+  newTag: 6928ca227ea7c27aa144b91b4a802b61d7da6ccb
+- name: lsxol/log-reader
+  newName: lsxol/log-reader
+  newTag: 6928ca227ea7c27aa144b91b4a802b61d7da6ccb
+- name: lsxol/ping-pong
+  newName: lsxol/ping-pong
+  newTag: 6928ca227ea7c27aa144b91b4a802b61d7da6ccb
