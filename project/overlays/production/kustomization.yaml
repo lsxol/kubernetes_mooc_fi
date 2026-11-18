@@ -2,14 +2,14 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: project-production
 resources:
-  - ../../base
+- ../../base
 images:
 - name: lsxol/broadcaster
   newName: lsxol/broadcaster
-  newTag: dea64f8c555638b7f9058dd6d4921e4e4c829750
+  newTag: "4.9"
 - name: lsxol/todo-app
   newName: lsxol/todo-app
-  newTag: dea64f8c555638b7f9058dd6d4921e4e4c829750
+  newTag: "4.9"
 - name: lsxol/todo-backend-app
   newName: lsxol/todo-backend-app
-  newTag: dea64f8c555638b7f9058dd6d4921e4e4c829750
+  newTag: "4.9"
