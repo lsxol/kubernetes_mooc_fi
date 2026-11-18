@@ -1,6 +1,16 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - todo-app/todo-app/manifests
-  - todo-backend-app/manifests
-  - broadcaster/manifests
+- todo-app/todo-app/manifests
+- todo-backend-app/manifests
+- broadcaster/manifests
+images:
+- name: lsxol/broadcaster
+  newName: lsxol/broadcaster
+  newTag: 73fe1a17dbeb92c03ba40dd39098c952787c2405
+- name: lsxol/todo-app
+  newName: lsxol/todo-app
+  newTag: 73fe1a17dbeb92c03ba40dd39098c952787c2405
+- name: lsxol/todo-backend-app
+  newName: lsxol/todo-backend-app
+  newTag: 73fe1a17dbeb92c03ba40dd39098c952787c2405
