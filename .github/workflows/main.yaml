@@ -2,27 +2,20 @@ name: Release application
 
 on:
   push:
-    branches: ['**']
+    branches:
+      - master
+    paths:
+      - 'todo-app/**'
+      - 'todo-backend-app/**'
+      - 'broadcaster/**'
+      - '.github/workflows/main.yaml'
 
 permissions:
-  contents: read
-  id-token: write
-
-env:
-  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GKE_CLUSTER: dwk-cluster
-  GKE_ZONE: europe-central2-b
-  REGISTRY: europe-central2-docker.pkg.dev
-  REPOSITORY: my-repository
-  IMAGE_FRONTEND: todo-app
-  IMAGE_BACKEND: todo-backend-app
-  IMAGE_BROADCASTER: broadcaster
-  BRANCH: ${{ github.ref_name }}
-  NAMESPACE: ${{ github.ref_name == 'master' && 'project' || github.ref_name }}
+  contents: write
 
 jobs:
-  build-publish-deploy:
-    name: Build, Publish and Deploy
+  build-publish:
+    name: Build, publish and release
     runs-on: ubuntu-latest
     environment: GKE_PROJECT
 
@@ -30,33 +23,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - uses: google-github-actions/auth@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
         with:
-          workload_identity_provider: "${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}"
-          service_account: "${{ secrets.SERVICE_ACCOUNT }}"
-
-      - name: 'Set up Cloud SDK'
-        uses: google-github-actions/setup-gcloud@v3
-
-      - name: 'Use gcloud CLI'
-        run: gcloud info
-
-      - name: 'Get GKE credentials'
-        uses: 'google-github-actions/get-gke-credentials@v3'
-        with:
-          cluster_name: '${{ env.GKE_CLUSTER }}'
-          project_id: '${{ env.PROJECT_ID }}'
-          location: '${{ env.GKE_ZONE }}'
-      
-      - name: 'Inject project ID into the manifests'
-        run: sed -i "s/PROJECT_ID/${{ env.PROJECT_ID }}/g" todo-backend-app/manifests/backupcronjob.yaml
-      
-      - name : 'Form the image name'
-        run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE_FRONTEND:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
-      - name : 'Form the backend image name'
-        run: echo "BACKEND_IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE_BACKEND:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
-      - name : 'Form the broadcaster image name'
-        run: echo "BROADCASTER_IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE_BROADCASTER:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Install java
         uses: actions/setup-java@v5
@@ -76,35 +47,32 @@ jobs:
         working-directory: broadcaster
         run: ./gradlew build -x test
 
-      - name: Build frontend image
-        run: docker build -f todo-app/todo-app/src/main/docker/Dockerfile.jvm --tag $IMAGE_TAG todo-app/todo-app
-      - name: Build backend image
-        run: docker build -f todo-backend-app/src/main/docker/Dockerfile.jvm --tag $BACKEND_IMAGE_TAG todo-backend-app
-      - name: Build broadcaster image
-        run: docker build -f broadcaster/src/main/docker/Dockerfile.jvm --tag $BROADCASTER_IMAGE_TAG broadcaster
+      - name: Build and publish frontend image
+        run: |
+          docker build -f todo-app/todo-app/src/main/docker/Dockerfile.jvm -t lsxol/todo-app:${GITHUB_SHA} todo-app/todo-app
+          docker push lsxol/todo-app:${GITHUB_SHA}
 
-      - name: Configure Docker
-        run: gcloud --quiet auth configure-docker $REGISTRY
+      - name: Build and publish backend image
+        run: |
+          docker build -f todo-backend-app/src/main/docker/Dockerfile.jvm -t lsxol/todo-backend-app:${GITHUB_SHA} todo-backend-app
+          docker push lsxol/todo-backend-app:${GITHUB_SHA}
 
-      - name: Publish
-        run: docker push $IMAGE_TAG
-
-      - name: Publish backend image
-        run: docker push $BACKEND_IMAGE_TAG
-
-      - name: Publish broadcaster image
-        run: docker push $BROADCASTER_IMAGE_TAG
+      - name: Build and publish broadcaster image
+        run: |
+          docker build -f broadcaster/src/main/docker/Dockerfile.jvm -t lsxol/broadcaster:${GITHUB_SHA} broadcaster
+          docker push lsxol/broadcaster:${GITHUB_SHA}
 
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v3
 
-      - name: Deploy to GKE
-        run: |-
-          kustomize edit set namespace ${NAMESPACE}
-          kustomize edit set image lsxol/todo-app=$IMAGE_TAG
-          kustomize edit set image lsxol/todo-backend-app=$BACKEND_IMAGE_TAG
-          kustomize edit set image lsxol/broadcaster=$BROADCASTER_IMAGE_TAG
-          kustomize build . | kubectl apply -f -
-          kubectl rollout status deployment/todo-app -n ${NAMESPACE}
-          kubectl rollout status deployment/todo-backend-app -n ${NAMESPACE}
-          kubectl rollout status deployment/broadcaster -n ${NAMESPACE}
+      - name: Update image tags
+        run: |
+          kustomize edit set image lsxol/todo-app=lsxol/todo-app:${GITHUB_SHA}
+          kustomize edit set image lsxol/todo-backend-app=lsxol/todo-backend-app:${GITHUB_SHA}
+          kustomize edit set image lsxol/broadcaster=lsxol/broadcaster:${GITHUB_SHA}
+
+      - name: Commit updated kustomization.yaml
+        uses: EndBug/add-and-commit@v10
+        with:
+          add: 'kustomization.yaml'
+          message: "New project version released ${{ github.sha }}"

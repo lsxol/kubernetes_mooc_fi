@@ -4,7 +4,7 @@ metadata:
   name: todo-backup-sa
   namespace: project
   annotations:
-    iam.gke.io/gcp-service-account: todo-backup-gsa@PROJECT_ID.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account: todo-backup-gsa@project-544860b6-37a7-4f38-b69.iam.gserviceaccount.com
 ---
 apiVersion: batch/v1
 kind: CronJob

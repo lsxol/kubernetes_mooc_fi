@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: project
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/lsxol/kubernetes_mooc_fi
+    path: .
+    targetRevision: master
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: project
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
