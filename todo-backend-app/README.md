@@ -43,15 +43,15 @@ The Secret in the repo holds a dummy password on purpose. This is a public cours
 
 ## Manifests
 
-Everything goes into the `project` namespace, which is created by [todo-app's manifests](../todo-app/todo-app/manifests/namespace.yaml).
+Since 4.10 the manifests live in the configuration repository, in [`base/todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi-config/tree/master/base/todo-backend-app). The staging overlay removes the backup CronJob and its ServiceAccount.
 
-- `manifests/secret.yaml` is the Secret with the database password
-- `manifests/postgresql.yaml` has the StatefulSet and its headless Service
-- `manifests/deployment.yaml` is the app
-- `manifests/service.yaml` is a ClusterIP Service on port 2346, forwarding to 8080
-- `manifests/cronjob.yaml` is a CronJob that every hour posts a todo "Read <random Wikipedia article>"
-- `manifests/backupcronjob.yaml` is the nightly database backup, see below
-- `manifests/kustomization.yaml` lists the files above
+- `secret.yaml` is the Secret with the database password
+- `postgresql.yaml` has the StatefulSet and its headless Service
+- `deployment.yaml` is the app
+- `service.yaml` is a ClusterIP Service on port 2346, forwarding to 8080
+- `cronjob.yaml` is a CronJob that every hour posts a todo "Read <random Wikipedia article>"
+- `backupcronjob.yaml` is the nightly database backup, see below
+- `kustomization.yaml` lists the files above
 
 There is no Gateway rule for the backend. It is only reachable inside the cluster, by the frontend and by the CronJob, both through `todo-backend-app-service:2346`.
 

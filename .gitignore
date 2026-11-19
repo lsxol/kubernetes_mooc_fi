@@ -6,3 +6,5 @@ CLAUDE.md
 .idea/
 # OS
 .DS_Store
+# Repozytorium z konfiguracja projektu (osobne repo git)
+kubernetes_mooc_fi-config/

@@ -52,12 +52,15 @@ Each exercise number below links to its release. The column next to it links to 
 | **[4.7](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.7)** | Baby steps to GitOps | [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.7/log_output)<br>[`ping-pong/manifests`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.7/ping-pong/manifests)<br>[`.github/workflows/logoutput.yml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/4.7/.github/workflows/logoutput.yml) |
 | **[4.8](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.8)** | The project, step 24 | [`argocd`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.8/argocd)<br>[`kustomization.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/4.8/kustomization.yaml)<br>[`.github/workflows/main.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/4.8/.github/workflows/main.yaml) |
 | **[4.9](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.9)** | The project, step 25 | [`project`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.9/project)<br>[`argocd`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.9/argocd)<br>[`broadcaster`](https://github.com/lsxol/kubernetes_mooc_fi/tree/4.9/broadcaster)<br>[`.github/workflows/main.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/4.9/.github/workflows/main.yaml) |
+| **[4.10](https://github.com/lsxol/kubernetes_mooc_fi/releases/tag/4.10)** | The project, the grande finale | [`kubernetes_mooc_fi-config`](https://github.com/lsxol/kubernetes_mooc_fi-config)<br>[`.github/workflows/main.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/4.10/.github/workflows/main.yaml) |
+
 ## The apps
 
 - [`log_output`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/log_output) is the log output app, a writer and a reader container sharing a volume
 - [`ping-pong`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/ping-pong) is the ping-pong counter, backed by PostgreSQL
 - [`todo-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/todo-app/todo-app) is the project frontend
 - [`todo-backend-app`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/todo-backend-app) is the project backend
+- [`broadcaster`](https://github.com/lsxol/kubernetes_mooc_fi/tree/master/broadcaster) forwards the todo events from NATS to a webhook
 
 Each of them has its own README with the startup steps.
 
@@ -65,19 +68,24 @@ Each of them has its own README with the startup steps.
 
 ## Deployment pipeline
 
-Every push to a branch runs [`.github/workflows/main.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/master/.github/workflows/main.yaml). It builds both project apps with Gradle, builds their images, pushes them to Artifact Registry and deploys the project to GKE with Kustomize, replacing the Docker Hub images in the manifests with the freshly built ones.
+Since chapter 4 the cluster is managed with GitOps: GitHub Actions only builds and publishes images, ArgoCD deploys. Nothing outside the cluster has access to it.
 
-Every branch gets its own environment: the workflow sets the Kustomize namespace to the branch name, so a push to `test-env` deploys a full copy of the project, Gateway included, into the namespace `test-env`. Pushes to `master` still go to `project`.
+The project's configuration lives in its own repository, [kubernetes_mooc_fi-config](https://github.com/lsxol/kubernetes_mooc_fi-config): a Kustomize base with the manifests of the three apps, overlays for staging and production, and the ArgoCD applications. Locally it is cloned into the `kubernetes_mooc_fi-config` folder, which this repository ignores.
 
-Deleting a branch deletes its environment. [`.github/workflows/delete-env.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/master/.github/workflows/delete-env.yaml) runs on the `delete` event and removes the namespace named after the branch, which takes the Gateway and its load balancer down with it. Tags are ignored.
+[`.github/workflows/main.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/master/.github/workflows/main.yaml) builds the frontend, the backend and the broadcaster with Gradle and pushes their images to Docker Hub. Then it checks out the configuration repository and commits the new image tags to it:
 
-The workflow logs in to Google Cloud with Workload Identity Federation, so there is no service account key anywhere. It reads three secrets from the GitHub environment `GKE_PROJECT`: `GKE_PROJECT` (project ID), `SERVICE_ACCOUNT` (e-mail of the deploying service account) and `WORKLOAD_IDENTITY_PROVIDER` (full resource name of the provider).
+- a push to `master` tags the images with the commit SHA and releases them to `overlays/staging`
+- a pushed tag tags the images with the tag name and releases them to `overlays/production`
+
+Writing to another repository needs the secret `CONFIG_REPO_TOKEN`, a fine-grained personal access token with read and write access to the contents of the configuration repository. It sits in the GitHub environment `GKE_PROJECT` together with `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`.
+
+log_output and ping-pong are deployed the same way by [`.github/workflows/logoutput.yml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/master/.github/workflows/logoutput.yml), whose configuration stays in this repository in [`log_output/kustomization.yaml`](https://github.com/lsxol/kubernetes_mooc_fi/blob/master/log_output/kustomization.yaml).
 
 ## Namespaces
 
-`exercises` holds log_output, ping-pong, the ping-pong database and the shared volume. It has no manifest, so you create it with `kubectl create namespace exercises`.
+`exercises` holds log_output, ping-pong and the ping-pong database.
 
-`project` holds todo-app and todo-backend-app. Since 3.5 it has a manifest and is created together with the rest by `kubectl apply -k .` from the repository root.
+`project-staging` and `project-production` hold the project, `nats` holds NATS. ArgoCD creates them when it syncs.
 
 
 ## 3.9. DBaaS vs DIY

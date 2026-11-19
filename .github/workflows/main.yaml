@@ -10,18 +10,17 @@ on:
       - 'todo-app/**'
       - 'todo-backend-app/**'
       - 'broadcaster/**'
-      - 'project/base/**'
       - '.github/workflows/main.yaml'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: project-release
   cancel-in-progress: false
 
 env:
-  OVERLAY: ${{ github.ref_type == 'tag' && 'project/overlays/production' || 'project/overlays/staging' }}
+  OVERLAY: ${{ github.ref_type == 'tag' && 'overlays/production' || 'overlays/staging' }}
   IMAGE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || github.sha }}
 
 jobs:
@@ -73,24 +72,27 @@ jobs:
           docker build -f broadcaster/src/main/docker/Dockerfile.jvm -t lsxol/broadcaster:${IMAGE_TAG} broadcaster
           docker push lsxol/broadcaster:${IMAGE_TAG}
 
-      - name: Switch to master
-        if: github.ref_type == 'tag'
-        run: |
-          git fetch --depth=1 origin master
-          git checkout -B master origin/master
+      # the release goes to the configuration repository, GITHUB_TOKEN can only write to this one
+      - name: Checkout configuration repository
+        uses: actions/checkout@v6
+        with:
+          repository: lsxol/kubernetes_mooc_fi-config
+          token: ${{ secrets.CONFIG_REPO_TOKEN }}
+          path: config
 
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v3
 
       - name: Update image tags
-        working-directory: ${{ env.OVERLAY }}
+        working-directory: config/${{ env.OVERLAY }}
         run: |
           kustomize edit set image lsxol/todo-app=lsxol/todo-app:${IMAGE_TAG}
           kustomize edit set image lsxol/todo-backend-app=lsxol/todo-backend-app:${IMAGE_TAG}
           kustomize edit set image lsxol/broadcaster=lsxol/broadcaster:${IMAGE_TAG}
 
-      - name: Commit updated kustomization.yaml
+      - name: Commit to the configuration repository
         uses: EndBug/add-and-commit@v10
         with:
+          cwd: config
           add: '${{ env.OVERLAY }}/kustomization.yaml'
-          message: "Release ${{ env.IMAGE_TAG }} to ${{ github.ref_type == 'tag' && 'production' || 'staging' }}"
+          message: "Release ${{ env.IMAGE_TAG }} to ${{ github.ref_type == 'tag' && 'production' || 'staging' }} (lsxol/kubernetes_mooc_fi@${{ github.sha }})"

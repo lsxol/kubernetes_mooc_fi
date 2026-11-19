@@ -32,8 +32,10 @@ The app connects to NATS in the background, so it starts even when NATS is down 
 
 ## Manifests
 
-- `manifests/deployment.yaml`, six replicas. No Service, nothing calls the broadcaster.
-- `manifests/configmap.yaml` holds `WEBHOOK_URL`. For testing it points to [webhook.site](https://webhook.site), which shows every request it gets.
+Since 4.10 the manifests live in the configuration repository, in [`base/broadcaster`](https://github.com/lsxol/kubernetes_mooc_fi-config/tree/master/base/broadcaster). In staging `FORWARD_ENABLED=false` makes the broadcaster only log the messages, and each environment listens on its own NATS subject (`NATS_SUBJECT`).
+
+- `deployment.yaml`, six replicas. No Service, nothing calls the broadcaster.
+- `configmap.yaml` holds `WEBHOOK_URL`. For testing it points to [webhook.site](https://webhook.site), which shows every request it gets.
 
 ## Running it
 

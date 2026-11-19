@@ -35,16 +35,15 @@ All of it comes from the ConfigMap `todo-app-configmap`, loaded with `envFrom`:
 
 ## Manifests
 
-Everything goes into the `project` namespace.
+Since 4.10 the manifests live in the configuration repository, in [`base/todo-app`](https://github.com/lsxol/kubernetes_mooc_fi-config/tree/master/base/todo-app). The staging and production overlays put them into the `project-staging` and `project-production` namespaces.
 
-- `manifests/namespace.yaml` creates the namespace
-- `manifests/configmap.yaml` holds the config above
-- `manifests/deployment.yaml` is the app, with an `emptyDir` mounted at `/usr/src/app/files` for the cached picture
-- `manifests/service.yaml` is a ClusterIP Service on port 2345, forwarding to 8080
-- `manifests/gateway.yaml` is the Gateway, class `gke-l7-global-external-managed`, one HTTP listener on port 80
-- `manifests/route.yaml` is the HTTPRoute, a single rule sending `/` to this app
-- `manifests/healthcheckpolicy.yaml` points the load balancer's health check at `/healthz/ready`
-- `manifests/kustomization.yaml` lists the files above
+- `configmap.yaml` holds the config above
+- `deployment.yaml` is the app, with an `emptyDir` mounted at `/usr/src/app/files` for the cached picture
+- `service.yaml` is a ClusterIP Service on port 2345, forwarding to 8080
+- `gateway.yaml` is the Gateway, class `gke-l7-global-external-managed`, one HTTP listener on port 80
+- `route.yaml` is the HTTPRoute, a single rule sending `/` to this app
+- `healthcheckpolicy.yaml` points the load balancer's health check at `/healthz/ready`
+- `kustomization.yaml` lists the files above
 
 There is only one route rule on purpose. The backend has no rule of its own, so it can't be reached from outside the cluster; the frontend calls it through its Service. Gateway and HTTPRoute are for traffic coming in, pods talk to each other through Services without them.
 
@@ -54,13 +53,11 @@ Up to exercise 2.10 the picture lived on a local PersistentVolume pinned to a k3
 
 ## Running it
 
-The whole project, frontend and backend together, is deployed from the repository root with Kustomize:
+The project is deployed by ArgoCD from the [configuration repository](https://github.com/lsxol/kubernetes_mooc_fi-config). Its overlays can be previewed with Kustomize:
 
 ```bash
-kubectl apply -k .
+kubectl kustomize overlays/staging
 ```
-
-The root [`kustomization.yaml`](../../kustomization.yaml) points at this folder and at `todo-backend-app/manifests`, each with its own `kustomization.yaml`. `kubectl kustomize .` prints what would be applied.
 
 The cluster needs the Gateway API enabled first, GKE leaves it off by default. Without it the apply stops at `no matches for kind "Gateway"`, while everything else is created fine:
 
